@@ -3,12 +3,21 @@ using UnityEngine;
 
 public class TrafficSpawner : MonoBehaviour
 {
+    [System.Serializable]
+    private class TrafficSpawnEntry
+    {
+        public GameObject prefab;
+
+        [Min(0f)]
+        public float spawnWeight = 1f;
+    }
+
     [Header("References")]
     [SerializeField] private LaneSystem laneSystem;
     [SerializeField] private TrafficSpawnPlanner spawnPlanner;
 
     [Header("Traffic")]
-    [SerializeField] private GameObject[] trafficPrefabs;
+    [SerializeField] private TrafficSpawnEntry[] trafficPrefabs;
 
     [Header("Spawning")]
     [SerializeField] private float spawnInterval = 1.1f;
@@ -50,19 +59,59 @@ public class TrafficSpawner : MonoBehaviour
     {
         List<SpawnOption> options = new List<SpawnOption>();
 
-        for (int trafficIndex = 0; trafficIndex < trafficPrefabs.Length; trafficIndex++)
+        for (int laneIndex = 0; laneIndex < laneSystem.LaneCount; laneIndex++)
         {
-            for (int laneIndex = 0; laneIndex < laneSystem.LaneCount; laneIndex++)
+            GameObject selectedPrefab = GetRandomTrafficPrefabByWeight();
+
+            if (selectedPrefab == null)
+                continue;
+
+            options.Add(new SpawnOption
             {
-                options.Add(new SpawnOption
-                {
-                    TrafficPrefab = trafficPrefabs[trafficIndex],
-                    LaneIndex = laneIndex
-                });
-            }
+                TrafficPrefab = selectedPrefab,
+                LaneIndex = laneIndex
+            });
         }
 
         return options;
+    }
+
+    private GameObject GetRandomTrafficPrefabByWeight()
+    {
+        float totalWeight = 0f;
+
+        foreach (TrafficSpawnEntry entry in trafficPrefabs)
+        {
+            if (entry == null || entry.prefab == null)
+                continue;
+
+            if (entry.spawnWeight <= 0f)
+                continue;
+
+            totalWeight += entry.spawnWeight;
+        }
+
+        if (totalWeight <= 0f)
+            return null;
+
+        float randomValue = Random.Range(0f, totalWeight);
+        float currentWeight = 0f;
+
+        foreach (TrafficSpawnEntry entry in trafficPrefabs)
+        {
+            if (entry == null || entry.prefab == null)
+                continue;
+
+            if (entry.spawnWeight <= 0f)
+                continue;
+
+            currentWeight += entry.spawnWeight;
+
+            if (randomValue <= currentWeight)
+                return entry.prefab;
+        }
+
+        return null;
     }
 
     private void SpawnTraffic(GameObject trafficPrefab, int laneIndex)

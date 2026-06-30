@@ -63,7 +63,7 @@ public class PlayerController : MonoBehaviour
 
         if (other.CompareTag("Traffic"))
         {
-            Debug.Log("Hit enemy");
+            Debug.Log("Hit traffic");
             GameManager.Instance.GameOver();
         }
     }

@@ -7,8 +7,8 @@ public class TrafficSpawner : MonoBehaviour
     [SerializeField] private LaneSystem laneSystem;
     [SerializeField] private TrafficSpawnPlanner spawnPlanner;
 
-    [Header("Enemies")]
-    [SerializeField] private GameObject[] enemyPrefabs;
+    [Header("Traffic")]
+    [SerializeField] private GameObject[] trafficPrefabs;
 
     [Header("Spawning")]
     [SerializeField] private float spawnInterval = 1.1f;
@@ -24,39 +24,39 @@ public class TrafficSpawner : MonoBehaviour
 
         if (timer >= spawnInterval)
         {
-            TrySpawnEnemy();
+            TrySpawnTraffic();
             timer = 0f;
         }
     }
 
-    private void TrySpawnEnemy()
+    private void TrySpawnTraffic()
     {
         List<SpawnOption> options = GenerateSpawnOptions();
         Shuffle(options);
 
         foreach (SpawnOption option in options)
         {
-            if (spawnPlanner.IsSpawnFair(option.EnemyPrefab, option.LaneIndex))
+            if (spawnPlanner.IsSpawnFair(option.TrafficPrefab, option.LaneIndex))
             {
-                SpawnEnemy(option.EnemyPrefab, option.LaneIndex);
+                SpawnTraffic(option.TrafficPrefab, option.LaneIndex);
                 return;
             }
         }
 
-        // Ako nijedna opcija nije fer, ne spawnujemo ništa.
+        // Ako nijedna opcija nije fer, ne spawnujemo nista.
     }
 
     private List<SpawnOption> GenerateSpawnOptions()
     {
         List<SpawnOption> options = new List<SpawnOption>();
 
-        for (int enemyIndex = 0; enemyIndex < enemyPrefabs.Length; enemyIndex++)
+        for (int trafficIndex = 0; trafficIndex < trafficPrefabs.Length; trafficIndex++)
         {
             for (int laneIndex = 0; laneIndex < laneSystem.LaneCount; laneIndex++)
             {
                 options.Add(new SpawnOption
                 {
-                    EnemyPrefab = enemyPrefabs[enemyIndex],
+                    TrafficPrefab = trafficPrefabs[trafficIndex],
                     LaneIndex = laneIndex
                 });
             }
@@ -65,25 +65,25 @@ public class TrafficSpawner : MonoBehaviour
         return options;
     }
 
-    private void SpawnEnemy(GameObject enemyPrefab, int laneIndex)
+    private void SpawnTraffic(GameObject trafficPrefab, int laneIndex)
     {
-        TrafficVehicle enemyData = enemyPrefab.GetComponent<TrafficVehicle>();
+        TrafficVehicle trafficData = trafficPrefab.GetComponent<TrafficVehicle>();
 
-        if (enemyData == null)
+        if (trafficData == null)
         {
-            Debug.LogWarning("Enemy prefab nema TrafficVehicle script.");
+            Debug.LogWarning("Traffic prefab nema TrafficVehicle script.");
             return;
         }
 
         float laneX = laneSystem.GetLaneX(laneIndex);
-        float spawnY = laneSystem.GetSpawnY(enemyData);
+        float spawnY = laneSystem.GetSpawnY(trafficData);
 
         Vector3 spawnPosition = new Vector3(laneX, spawnY, 0f);
 
-        GameObject spawnedEnemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+        GameObject spawnedTraffic = Instantiate(trafficPrefab, spawnPosition, Quaternion.identity);
 
-        TrafficVehicle TrafficVehicle = spawnedEnemy.GetComponent<TrafficVehicle>();
-        TrafficVehicle.Initialize(laneIndex, laneSystem);
+        TrafficVehicle trafficVehicle = spawnedTraffic.GetComponent<TrafficVehicle>();
+        trafficVehicle.Initialize(laneIndex, laneSystem);
     }
 
     private void Shuffle(List<SpawnOption> options)
@@ -100,7 +100,7 @@ public class TrafficSpawner : MonoBehaviour
 
     private struct SpawnOption
     {
-        public GameObject EnemyPrefab;
+        public GameObject TrafficPrefab;
         public int LaneIndex;
     }
 }

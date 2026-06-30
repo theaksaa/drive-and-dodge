@@ -959,7 +959,7 @@ GameObject:
   - component: {fileID: 1246977949}
   - component: {fileID: 1246977948}
   m_Layer: 0
-  m_Name: EnemySpawner
+  m_Name: TrafficSpawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -976,10 +976,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db9ce823822bd0a4796f2d4b2351320b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  m_EditorClassIdentifier: Assembly-CSharp::TrafficSpawner
   laneSystem: {fileID: 1390585778}
   spawnPlanner: {fileID: 1400229568}
-  enemyPrefabs:
+  trafficPrefabs:
   - {fileID: 3939303659938814717, guid: bbef8c5f8180e7340858dd355add14c0, type: 3}
   - {fileID: 3939303659938814717, guid: cc81c7005f4453f4fafb6f40de333cdb, type: 3}
   - {fileID: 3939303659938814717, guid: 8459d7028794427479414af61ce8b2f4, type: 3}
@@ -1132,7 +1132,7 @@ GameObject:
   - component: {fileID: 1400229569}
   - component: {fileID: 1400229568}
   m_Layer: 0
-  m_Name: EnemySpawnPlanner
+  m_Name: TrafficSpawnPlanner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1149,7 +1149,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 674a0ee52d7992a49b300244d9b144a2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnPlanner
+  m_EditorClassIdentifier: Assembly-CSharp::TrafficSpawnPlanner
   laneSystem: {fileID: 1390585778}
   playerLaneTracker: {fileID: 560615493}
   predictionTime: 3
@@ -1318,7 +1318,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1839110610}
   m_Layer: 0
-  m_Name: Enemy
+  m_Name: Traffic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

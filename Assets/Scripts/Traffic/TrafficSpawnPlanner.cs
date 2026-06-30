@@ -15,104 +15,104 @@ public class TrafficSpawnPlanner : MonoBehaviour
     [SerializeField] private float dangerZoneAbovePlayer = 2.2f;
     [SerializeField] private float dangerZoneBelowPlayer = 1.2f;
 
-    public bool IsSpawnFair(GameObject enemyPrefab, int laneIndex)
+    public bool IsSpawnFair(GameObject trafficPrefab, int laneIndex)
     {
-        TrafficVehicle enemyData = enemyPrefab.GetComponent<TrafficVehicle>();
+        TrafficVehicle trafficData = trafficPrefab.GetComponent<TrafficVehicle>();
 
-        if (enemyData == null)
+        if (trafficData == null)
             return false;
 
-        List<EnemySnapshot> snapshots = CreateEnemySnapshots();
+        List<TrafficSnapshot> snapshots = CreateTrafficSnapshots();
 
-        EnemySnapshot newEnemySnapshot = new EnemySnapshot
+        TrafficSnapshot newTrafficSnapshot = new TrafficSnapshot
         {
             LaneIndex = laneIndex,
-            StartY = laneSystem.GetSpawnY(enemyData),
-            Speed = enemyData.MoveSpeed,
-            HalfLength = enemyData.GetHalfLength()
+            StartY = laneSystem.GetSpawnY(trafficData),
+            Speed = trafficData.MoveSpeed,
+            HalfLength = trafficData.GetHalfLength()
         };
 
-        if (WillCollideWithEnemyInSameLane(snapshots, newEnemySnapshot))
+        if (WillCollideWithTrafficInSameLane(snapshots, newTrafficSnapshot))
             return false;
 
-        snapshots.Add(newEnemySnapshot);
+        snapshots.Add(newTrafficSnapshot);
 
         bool[,] blockedMap = BuildBlockedMap(snapshots);
 
         return HasPlayerPath(blockedMap);
     }
 
-    private bool WillCollideWithEnemyInSameLane(List<EnemySnapshot> existingEnemies, EnemySnapshot newEnemy)
+    private bool WillCollideWithTrafficInSameLane(List<TrafficSnapshot> existingTraffic, TrafficSnapshot newTraffic)
     {
-        foreach (EnemySnapshot existingEnemy in existingEnemies)
+        foreach (TrafficSnapshot existingVehicle in existingTraffic)
         {
-            if (existingEnemy.LaneIndex != newEnemy.LaneIndex)
+            if (existingVehicle.LaneIndex != newTraffic.LaneIndex)
                 continue;
 
-            // Existing enemy mora biti ispred novog enemyja.
-            // Veći Y znači da je više/gore na ekranu.
-            if (existingEnemy.StartY >= newEnemy.StartY)
+            // Existing traffic mora biti ispred novog traffic vozila.
+            // Veci Y znaci da je vise/gore na ekranu.
+            if (existingVehicle.StartY >= newTraffic.StartY)
                 continue;
 
-            // Ako novi enemy nije brži, neće ga stići.
-            float relativeSpeed = newEnemy.Speed - existingEnemy.Speed;
+            // Ako novo traffic vozilo nije brze, nece ga stici.
+            float relativeSpeed = newTraffic.Speed - existingVehicle.Speed;
 
             if (relativeSpeed <= 0f)
                 continue;
 
-            float newEnemyFrontY = newEnemy.StartY - newEnemy.HalfLength;
-            float existingEnemyBackY = existingEnemy.StartY + existingEnemy.HalfLength;
+            float newTrafficFrontY = newTraffic.StartY - newTraffic.HalfLength;
+            float existingTrafficBackY = existingVehicle.StartY + existingVehicle.HalfLength;
 
-            float gap = newEnemyFrontY - existingEnemyBackY;
+            float gap = newTrafficFrontY - existingTrafficBackY;
 
             if (gap <= 0f)
                 return true;
 
             float timeUntilCatch = gap / relativeSpeed;
-            float timeUntilExistingEnemyLeaves = GetTimeUntilEnemyLeavesScreen(existingEnemy);
+            float timeUntilExistingTrafficLeaves = GetTimeUntilTrafficLeavesScreen(existingVehicle);
 
-            // Ako ga stiže pre nego što postojeći enemy izađe sa ekrana,
+            // Ako ga stize pre nego sto postojece traffic vozilo izadje sa ekrana,
             // ovaj spawn nije bezbedan.
-            if (timeUntilCatch <= timeUntilExistingEnemyLeaves)
+            if (timeUntilCatch <= timeUntilExistingTrafficLeaves)
                 return true;
         }
 
         return false;
     }
 
-    private float GetTimeUntilEnemyLeavesScreen(EnemySnapshot enemy)
+    private float GetTimeUntilTrafficLeavesScreen(TrafficSnapshot traffic)
     {
         float bottomY = laneSystem.GetBottomY();
 
-        float distanceUntilGone = enemy.StartY - bottomY + enemy.HalfLength;
+        float distanceUntilGone = traffic.StartY - bottomY + traffic.HalfLength;
 
-        return distanceUntilGone / enemy.Speed;
+        return distanceUntilGone / traffic.Speed;
     }
 
-    private List<EnemySnapshot> CreateEnemySnapshots()
+    private List<TrafficSnapshot> CreateTrafficSnapshots()
     {
-        List<EnemySnapshot> snapshots = new List<EnemySnapshot>();
+        List<TrafficSnapshot> snapshots = new List<TrafficSnapshot>();
 
-        TrafficVehicle[] activeEnemies = FindObjectsByType<TrafficVehicle>(FindObjectsSortMode.None);
+        TrafficVehicle[] activeTraffic = FindObjectsByType<TrafficVehicle>(FindObjectsSortMode.None);
 
-        foreach (TrafficVehicle enemy in activeEnemies)
+        foreach (TrafficVehicle trafficVehicle in activeTraffic)
         {
-            if (enemy.LaneIndex < 0)
+            if (trafficVehicle.LaneIndex < 0)
                 continue;
 
-            snapshots.Add(new EnemySnapshot
+            snapshots.Add(new TrafficSnapshot
             {
-                LaneIndex = enemy.LaneIndex,
-                StartY = enemy.transform.position.y,
-                Speed = enemy.MoveSpeed,
-                HalfLength = enemy.GetHalfLength()
+                LaneIndex = trafficVehicle.LaneIndex,
+                StartY = trafficVehicle.transform.position.y,
+                Speed = trafficVehicle.MoveSpeed,
+                HalfLength = trafficVehicle.GetHalfLength()
             });
         }
 
         return snapshots;
     }
 
-    private bool[,] BuildBlockedMap(List<EnemySnapshot> enemies)
+    private bool[,] BuildBlockedMap(List<TrafficSnapshot> trafficVehicles)
     {
         int stepCount = Mathf.CeilToInt(predictionTime / timeStep) + 1;
         int laneCount = laneSystem.LaneCount;
@@ -129,20 +129,20 @@ public class TrafficSpawnPlanner : MonoBehaviour
         {
             float futureTime = step * timeStep;
 
-            foreach (EnemySnapshot enemy in enemies)
+            foreach (TrafficSnapshot trafficVehicle in trafficVehicles)
             {
-                float futureY = enemy.StartY - enemy.Speed * futureTime;
+                float futureY = trafficVehicle.StartY - trafficVehicle.Speed * futureTime;
 
-                float enemyBottomY = futureY - enemy.HalfLength;
-                float enemyTopY = futureY + enemy.HalfLength;
+                float trafficBottomY = futureY - trafficVehicle.HalfLength;
+                float trafficTopY = futureY + trafficVehicle.HalfLength;
 
                 bool overlapsDangerZone =
-                    enemyTopY >= dangerBottomY &&
-                    enemyBottomY <= dangerTopY;
+                    trafficTopY >= dangerBottomY &&
+                    trafficBottomY <= dangerTopY;
 
                 if (overlapsDangerZone)
                 {
-                    blocked[step, enemy.LaneIndex] = true;
+                    blocked[step, trafficVehicle.LaneIndex] = true;
                 }
             }
         }
@@ -207,7 +207,7 @@ public class TrafficSpawnPlanner : MonoBehaviour
         return true;
     }
 
-    private struct EnemySnapshot
+    private struct TrafficSnapshot
     {
         public int LaneIndex;
         public float StartY;

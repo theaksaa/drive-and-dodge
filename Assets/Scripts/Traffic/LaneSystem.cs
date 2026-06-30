@@ -52,11 +52,11 @@ public class LaneSystem : MonoBehaviour
         return closestLane;
     }
 
-    public float GetSpawnY(TrafficVehicle enemy)
+    public float GetSpawnY(TrafficVehicle trafficVehicle)
     {
         Vector3 topRight = GetTopRight();
 
-        return topRight.y + enemy.GetHalfLength() + spawnYExtraOffset;
+        return topRight.y + trafficVehicle.GetHalfLength() + spawnYExtraOffset;
     }
 
     public float GetBottomY()

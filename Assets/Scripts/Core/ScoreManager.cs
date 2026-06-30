@@ -5,17 +5,23 @@ public class ScoreManager : MonoBehaviour
     public static ScoreManager Instance { get; private set; }
 
     [Header("Distance Score")]
-    [SerializeField] private float playerSpeed = 10f;
     [SerializeField] private float scoreMultiplier = 1f;
 
     private float distanceScore;
     private int bonusScore;
 
     public int TotalScore => Mathf.FloorToInt(distanceScore) + bonusScore;
-    public float PlayerSpeed => playerSpeed;
+    public float DistanceScore => distanceScore;
+    public int BonusScore => bonusScore;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
     }
 
@@ -29,7 +35,11 @@ public class ScoreManager : MonoBehaviour
 
     private void AddDistanceScore()
     {
-        distanceScore += playerSpeed * scoreMultiplier * Time.deltaTime;
+        float gameSpeed = GameManager.Instance != null
+            ? GameManager.Instance.CurrentGameSpeed
+            : 0f;
+
+        distanceScore += gameSpeed * scoreMultiplier * Time.deltaTime;
     }
 
     public void AddBonusScore(int amount)
@@ -37,13 +47,9 @@ public class ScoreManager : MonoBehaviour
         bonusScore += amount;
     }
 
-    public void SetPlayerSpeed(float newSpeed)
+    public void ResetScore()
     {
-        playerSpeed = newSpeed;
-    }
-
-    public void AddPlayerSpeed(float amount)
-    {
-        playerSpeed += amount;
+        distanceScore = 0f;
+        bonusScore = 0;
     }
 }

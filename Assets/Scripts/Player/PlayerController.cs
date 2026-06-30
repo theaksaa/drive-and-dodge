@@ -31,12 +31,15 @@ public class PlayerController : MonoBehaviour
     private bool isDragging;
     private Vector3 dragTargetPosition;
 
+    private float lockedY;
+
     private void Awake()
     {
         mainCamera = Camera.main;
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         playerCollider = GetComponentInChildren<Collider2D>();
 
+        lockedY = transform.position.y;
         dragTargetPosition = transform.position;
 
         if (mainCamera == null)
@@ -73,6 +76,7 @@ public class PlayerController : MonoBehaviour
             MoveWithDrag();
         }
 
+        LockVerticalPosition();
         ClampToCameraBounds();
     }
 
@@ -83,7 +87,7 @@ public class PlayerController : MonoBehaviour
 
         Vector2 input = joystick.Direction;
 
-        Vector3 movement = new Vector3(input.x, input.y, 0f) * moveSpeed * Time.deltaTime;
+        Vector3 movement = new Vector3(input.x, 0f, 0f) * moveSpeed * Time.deltaTime;
         transform.position += movement;
     }
 
@@ -94,15 +98,21 @@ public class PlayerController : MonoBehaviour
         if (!isDragging)
             return;
 
+        Vector3 targetPosition = new Vector3(
+            dragTargetPosition.x,
+            lockedY,
+            transform.position.z
+        );
+
         if (instantDrag)
         {
-            transform.position = dragTargetPosition;
+            transform.position = targetPosition;
         }
         else
         {
             transform.position = Vector3.Lerp(
                 transform.position,
-                dragTargetPosition,
+                targetPosition,
                 dragFollowSpeed * Time.deltaTime
             );
         }
@@ -135,7 +145,7 @@ public class PlayerController : MonoBehaviour
         {
             if (isDragging)
             {
-                dragTargetPosition = worldPosition;
+                SetDragTargetXOnly(worldPosition);
             }
         }
         else if (touch.phase == TouchPhase.Ended ||
@@ -160,7 +170,7 @@ public class PlayerController : MonoBehaviour
 
         if (Mouse.current.leftButton.isPressed && isDragging)
         {
-            dragTargetPosition = worldPosition;
+            SetDragTargetXOnly(worldPosition);
         }
 
         if (Mouse.current.leftButton.wasReleasedThisFrame)
@@ -174,14 +184,23 @@ public class PlayerController : MonoBehaviour
         if (!onlyDragWhenTouchingPlayer || IsPointOnPlayer(worldPosition))
         {
             isDragging = true;
-            dragTargetPosition = worldPosition;
+            SetDragTargetXOnly(worldPosition);
 
-            Debug.Log("Started dragging player");
+            Debug.Log("Started dragging player horizontally");
         }
         else
         {
             Debug.Log("Pressed, but not on player");
         }
+    }
+
+    private void SetDragTargetXOnly(Vector3 worldPosition)
+    {
+        dragTargetPosition = new Vector3(
+            worldPosition.x,
+            lockedY,
+            transform.position.z
+        );
     }
 
     private Vector3 GetWorldPositionFromScreen(Vector2 screenPosition)
@@ -208,6 +227,13 @@ public class PlayerController : MonoBehaviour
         return playerCollider.OverlapPoint(worldPosition);
     }
 
+    private void LockVerticalPosition()
+    {
+        Vector3 pos = transform.position;
+        pos.y = lockedY;
+        transform.position = pos;
+    }
+
     private void ClampToCameraBounds()
     {
         if (mainCamera == null || spriteRenderer == null)
@@ -226,7 +252,6 @@ public class PlayerController : MonoBehaviour
         Vector3 pos = transform.position;
 
         float halfWidth = spriteRenderer.bounds.extents.x;
-        float halfHeight = spriteRenderer.bounds.extents.y;
 
         pos.x = Mathf.Clamp(
             pos.x,
@@ -234,11 +259,7 @@ public class PlayerController : MonoBehaviour
             topRight.x - halfWidth - screenPadding
         );
 
-        pos.y = Mathf.Clamp(
-            pos.y,
-            bottomLeft.y + halfHeight + screenPadding,
-            topRight.y - halfHeight - screenPadding
-        );
+        pos.y = lockedY;
 
         transform.position = pos;
     }

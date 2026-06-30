@@ -3,9 +3,9 @@ using UnityEngine;
 public class TrafficVehicle : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 4f;
+    [SerializeField] private float speedOffset = 0f;
 
-    public float MoveSpeed => moveSpeed;
+    public float SpeedOffset => speedOffset;
     public int LaneIndex { get; private set; } = -1;
 
     private Camera mainCamera;
@@ -27,9 +27,24 @@ public class TrafficVehicle : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
             return;
 
-        transform.position += Vector3.down * moveSpeed * Time.deltaTime;
-
+        MoveDown();
         DestroyIfOutsideScreen();
+    }
+
+    private void MoveDown()
+    {
+        float finalSpeed = GetFinalMoveSpeed();
+
+        transform.position += Vector3.down * finalSpeed * Time.deltaTime;
+    }
+
+    public float GetFinalMoveSpeed()
+    {
+        float globalSpeed = GameManager.Instance != null
+            ? GameManager.Instance.CurrentGameSpeed
+            : 4f;
+
+        return Mathf.Max(0f, globalSpeed + speedOffset);
     }
 
     public float GetHalfLength()
@@ -61,6 +76,9 @@ public class TrafficVehicle : MonoBehaviour
         }
         else
         {
+            if (mainCamera == null)
+                return;
+
             float distanceFromCamera = Mathf.Abs(mainCamera.transform.position.z - transform.position.z);
 
             Vector3 bottomLeft = mainCamera.ViewportToWorldPoint(

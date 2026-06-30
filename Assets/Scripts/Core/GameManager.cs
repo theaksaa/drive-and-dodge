@@ -13,6 +13,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float maxGameSpeed = 10f;
     [SerializeField] private float speedIncreasePerSecond = 0.02f;
 
+    [Header("Systems")]
+    [SerializeField] private ComboSystem comboSystem;
+
     public float CurrentGameSpeed { get; private set; }
     public float MaxGameSpeed => maxGameSpeed;
     public float SpeedIncreasePerSecond => speedIncreasePerSecond;
@@ -30,6 +33,9 @@ public class GameManager : MonoBehaviour
 
         CurrentGameSpeed = startGameSpeed;
         IsGameOver = false;
+
+        if (comboSystem == null)
+            comboSystem = FindFirstObjectByType<ComboSystem>();
     }
 
     private void Update()
@@ -52,6 +58,9 @@ public class GameManager : MonoBehaviour
             return;
 
         IsGameOver = true;
+
+        if (comboSystem != null)
+            comboSystem.ResetCombo();
 
         Debug.Log("GAME OVER");
 

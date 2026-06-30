@@ -61,7 +61,7 @@ public class PlayerController : MonoBehaviour
     {
         Debug.Log("Trigger detected with: " + other.gameObject.name);
 
-        if (other.CompareTag("Enemy"))
+        if (other.CompareTag("Traffic"))
         {
             Debug.Log("Hit enemy");
             GameManager.Instance.GameOver();

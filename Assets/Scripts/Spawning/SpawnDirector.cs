@@ -118,13 +118,15 @@ public class SpawnDirector : MonoBehaviour
                 playerLaneTracker.transform.position.y,
                 scrollSpeed);
 
-            SideRoadSpawnRequest request = new SideRoadSpawnRequest(
-                direction,
-                spawnTime,
-                timeToPlayerArea,
-                laneSystem.GetSideRoadWidth(direction),
-                sideRoadSpawner.SideRoadHeight,
-                scrollSpeed);
+            if (!sideRoadSpawner.TryCreateSpawnRequest(
+                    direction,
+                    spawnTime,
+                    timeToPlayerArea,
+                    scrollSpeed,
+                    out SideRoadSpawnRequest request))
+            {
+                continue;
+            }
 
             if (!sideRoadExecutor.CanExecuteSpawn(request))
                 continue;

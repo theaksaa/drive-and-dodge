@@ -1430,6 +1430,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SideRoadSpawner
   laneSystem: {fileID: 1390585778}
   sideRoadPrefab: {fileID: 3084955412098501969, guid: 90e5484710ddb30488551e1054479198, type: 3}
+  sideRoadVariants:
+  - sideRoadType: 0
+    prefabOverride: {fileID: 3084955412098501969, guid: 90e5484710ddb30488551e1054479198, type: 3}
+    spawnWeight: 1
+  - sideRoadType: 1
+    prefabOverride: {fileID: 3084955412098501969, guid: 7f56ed6f7f6a4973a5b92b6c39d49f5f, type: 3}
+    spawnWeight: 1
+  - sideRoadType: 2
+    prefabOverride: {fileID: 3084955412098501969, guid: 3085949b4fa24b65b6cf2440ccbcfdca, type: 3}
+    spawnWeight: 1
+  - sideRoadType: 3
+    prefabOverride: {fileID: 3084955412098501969, guid: c1dc1255f59444c4948c217967477f09, type: 3}
+    spawnWeight: 1
+  - sideRoadType: 4
+    prefabOverride: {fileID: 3084955412098501969, guid: 3afec9c0ff154788bb0bb13f012bb961, type: 3}
+    spawnWeight: 1
   minSpawnInterval: 5
   maxSpawnInterval: 9
   spawnYExtraOffset: 1.5

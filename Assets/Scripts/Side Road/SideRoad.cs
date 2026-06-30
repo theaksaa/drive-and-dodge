@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
@@ -10,6 +11,9 @@ public class SideRoad : MonoBehaviour
     public static bool CanUseLeftSideRoad => ActiveLeftZones > 0;
     public static bool CanUseRightSideRoad => ActiveRightZones > 0;
 
+    public static event Action<SideRoad> PlayerEnteredSideRoad;
+    public static event Action<SideRoad> PlayerExitedSideRoad;
+
     [Header("Movement")]
     [SerializeField] private float fallbackMoveSpeed = 5f;
     [SerializeField] private float despawnY = -8f;
@@ -19,10 +23,12 @@ public class SideRoad : MonoBehaviour
     [SerializeField] private BoxCollider2D triggerCollider;
 
     private SideRoadDirection direction;
+    private SideRoadType sideRoadType;
     private bool playerInside;
     private bool wasCountedAsVisible;
 
     public SideRoadDirection Direction => direction;
+    public SideRoadType RoadType => sideRoadType;
 
     private void Awake()
     {
@@ -61,6 +67,7 @@ public class SideRoad : MonoBehaviour
     }
 
     public void Setup(
+        SideRoadType type,
         SideRoadDirection sideRoadDirection,
         float despawnPositionY,
         float visualWidth,
@@ -68,6 +75,7 @@ public class SideRoad : MonoBehaviour
         float triggerOverlapIntoMainRoad
     )
     {
+        sideRoadType = type;
         direction = sideRoadDirection;
         despawnY = despawnPositionY;
 
@@ -100,6 +108,7 @@ public class SideRoad : MonoBehaviour
 
         playerInside = true;
         AddActiveZone();
+        PlayerEnteredSideRoad?.Invoke(this);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -112,6 +121,7 @@ public class SideRoad : MonoBehaviour
 
         playerInside = false;
         RemoveActiveZone();
+        PlayerExitedSideRoad?.Invoke(this);
     }
 
     private void AddActiveZone()

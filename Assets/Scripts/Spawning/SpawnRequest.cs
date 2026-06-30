@@ -58,6 +58,8 @@ public sealed class TrafficSpawnRequest : SpawnRequestBase
 public sealed class SideRoadSpawnRequest : SpawnRequestBase
 {
     public SideRoadSpawnRequest(
+        SideRoad prefab,
+        SideRoadType sideRoadType,
         SideRoadDirection sideDirection,
         float spawnTime,
         float timeToPlayerArea,
@@ -67,6 +69,8 @@ public sealed class SideRoadSpawnRequest : SpawnRequestBase
         SpawnSafetyMode safetyMode = SpawnSafetyMode.Required)
         : base(SpawnRequestType.SideRoad, spawnTime, false, safetyMode)
     {
+        Prefab = prefab;
+        SideRoadType = sideRoadType;
         SideDirection = sideDirection;
         TimeToPlayerArea = timeToPlayerArea;
         Width = width;
@@ -74,6 +78,8 @@ public sealed class SideRoadSpawnRequest : SpawnRequestBase
         Speed = speed;
     }
 
+    public SideRoad Prefab { get; }
+    public SideRoadType SideRoadType { get; }
     public SideRoadDirection SideDirection { get; }
     public float TimeToPlayerArea { get; }
     public float Width { get; }

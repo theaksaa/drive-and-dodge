@@ -137,7 +137,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &68349658
 RectTransform:
   m_ObjectHideFlags: 0
@@ -240,6 +240,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e32cb35640c6f5f478c7b829fea148c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  startGameSpeed: 4
+  maxGameSpeed: 12
+  speedIncreasePerSecond: 0.05
 --- !u!4 &312939497
 Transform:
   m_ObjectHideFlags: 0
@@ -404,6 +407,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -529,6 +533,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09c28b843d49efd4da71e2841ff00b43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraLaneFitter
+  laneSystem: {fileID: 1390585778}
+  playerTarget: {fileID: 560615492}
+  fitOnStart: 1
+  fitEveryFrame: 0
+  minOrthographicSize: 5
+  maxOrthographicSize: 10
+  cameraZ: -10
+  keepPlayerAtInitialScreenPosition: 1
 --- !u!1 &560615487
 GameObject:
   m_ObjectHideFlags: 0
@@ -562,9 +586,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e0352a8d94a4f54f8648609e2d70996, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  laneSystem: {fileID: 0}
+  movementMode: 1
   joystick: {fileID: 68349659}
   moveSpeed: 5
   screenPadding: 0.15
+  onlyDragWhenTouchingPlayer: 0
+  instantDrag: 0
+  dragFollowSpeed: 25
 --- !u!50 &560615489
 Rigidbody2D:
   serializedVersion: 5
@@ -706,7 +735,7 @@ Transform:
   m_GameObject: {fileID: 560615487}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -2, z: 0}
+  m_LocalPosition: {x: 0, y: -3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -931,7 +960,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a10d18ad84e9a94388f1c2acfdd777c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScoreManager
-  playerSpeed: 10
   scoreMultiplier: 1
 --- !u!4 &981218901
 Transform:
@@ -983,7 +1011,7 @@ MonoBehaviour:
   - {fileID: 3939303659938814717, guid: bbef8c5f8180e7340858dd355add14c0, type: 3}
   - {fileID: 3939303659938814717, guid: cc81c7005f4453f4fafb6f40de333cdb, type: 3}
   - {fileID: 3939303659938814717, guid: 8459d7028794427479414af61ce8b2f4, type: 3}
-  spawnInterval: 1.2
+  spawnInterval: 0.6
 --- !u!4 &1246977949
 Transform:
   m_ObjectHideFlags: 0
@@ -1104,8 +1132,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LaneSystem
   laneCount: 3
-  roadWidthPercent: 0.75
+  laneWidth: 1.6
+  leftMargin: 1
+  rightMargin: 1
   spawnYExtraOffset: 1.5
+  drawGizmos: 1
+  drawLaneBoundaries: 1
+  drawRoadBoundaries: 1
+  drawCameraMargins: 1
+  gizmoLineTopY: 10
+  gizmoLineBottomY: -10
 --- !u!4 &1390585779
 Transform:
   m_ObjectHideFlags: 0
@@ -1154,6 +1190,7 @@ MonoBehaviour:
   playerLaneTracker: {fileID: 560615493}
   predictionTime: 3
   timeStep: 0.25
+  laneChangeTime: 0.25
   dangerZoneAbovePlayer: 2.2
   dangerZoneBelowPlayer: 1.2
 --- !u!4 &1400229569

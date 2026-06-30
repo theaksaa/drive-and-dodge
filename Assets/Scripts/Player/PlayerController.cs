@@ -13,6 +13,9 @@ public class PlayerController : MonoBehaviour
         Drag
     }
 
+    [Header("References")]
+    [SerializeField] private LaneSystem laneSystem;
+
     [Header("Movement")]
     [SerializeField] private MovementMode movementMode = MovementMode.Joystick;
     [SerializeField] private Joystick joystick;
@@ -36,6 +39,7 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         mainCamera = Camera.main;
+        laneSystem ??= FindAnyObjectByType<LaneSystem>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         playerCollider = GetComponentInChildren<Collider2D>();
 
@@ -50,6 +54,9 @@ public class PlayerController : MonoBehaviour
 
         if (playerCollider == null)
             Debug.LogWarning("PlayerController: Collider2D not found. Drag when touching player will not work.");
+
+        if (laneSystem == null)
+            Debug.LogWarning("PlayerController: LaneSystem is not assigned. Player will fallback to camera bounds.");
     }
 
     private void OnEnable()
@@ -77,7 +84,7 @@ public class PlayerController : MonoBehaviour
         }
 
         LockVerticalPosition();
-        ClampToCameraBounds();
+        ClampToMovementBounds();
     }
 
     private void MoveWithJoystick()
@@ -234,9 +241,39 @@ public class PlayerController : MonoBehaviour
         transform.position = pos;
     }
 
-    private void ClampToCameraBounds()
+    private void ClampToMovementBounds()
     {
-        if (mainCamera == null || spriteRenderer == null)
+        Vector3 pos = transform.position;
+        float halfWidth = GetPlayerHalfWidth();
+
+        if (laneSystem != null)
+        {
+            pos.x = laneSystem.GetClampedXInsideRoad(pos.x, halfWidth);
+        }
+        else
+        {
+            ClampToCameraBoundsFallback(ref pos, halfWidth);
+        }
+
+        pos.y = lockedY;
+
+        transform.position = pos;
+    }
+
+    private float GetPlayerHalfWidth()
+    {
+        if (playerCollider != null)
+            return playerCollider.bounds.extents.x;
+
+        if (spriteRenderer != null)
+            return spriteRenderer.bounds.extents.x;
+
+        return 0f;
+    }
+
+    private void ClampToCameraBoundsFallback(ref Vector3 pos, float halfWidth)
+    {
+        if (mainCamera == null)
             return;
 
         float distanceFromCamera = Mathf.Abs(mainCamera.transform.position.z - transform.position.z);
@@ -249,19 +286,11 @@ public class PlayerController : MonoBehaviour
             new Vector3(1f, 1f, distanceFromCamera)
         );
 
-        Vector3 pos = transform.position;
-
-        float halfWidth = spriteRenderer.bounds.extents.x;
-
         pos.x = Mathf.Clamp(
             pos.x,
             bottomLeft.x + halfWidth + screenPadding,
             topRight.x - halfWidth - screenPadding
         );
-
-        pos.y = lockedY;
-
-        transform.position = pos;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

@@ -1029,6 +1029,91 @@ MonoBehaviour:
   preventMultipleVisibleSideRoads: 1
   sideRoadHeight: 2.5
   triggerOverlapIntoMainRoad: 0.5
+--- !u!1 &1146173214
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1146173218}
+  - component: {fileID: 1146173217}
+  - component: {fileID: 1146173216}
+  - component: {fileID: 1146173215}
+  m_Layer: 0
+  m_Name: SpawnDirector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1146173215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1146173214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b31b1dd905822846ba263aca8dbe82e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnReservationMap
+  cleanupPadding: 0.5
+--- !u!114 &1146173216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1146173214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4c263c127b7db14882c51fb12077d0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnSafetyPlanner
+  laneSystem: {fileID: 1390585778}
+  playerLaneTracker: {fileID: 560615493}
+  reservationMap: {fileID: 1146173215}
+  predictionTime: 3
+  timeStep: 0.15
+  laneChangeTime: 0.25
+  dangerZoneAbovePlayer: 2.2
+  dangerZoneBelowPlayer: 1.2
+  sideRoadArrivalBuffer: 0.35
+--- !u!114 &1146173217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1146173214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4971ad76222b0f9468aa312b15da0e23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnDirector
+  trafficSpawner: {fileID: 1246977948}
+  sideRoadSpawner: {fileID: 1050439749}
+  safetyPlanner: {fileID: 1146173216}
+  playerLaneTracker: {fileID: 560615493}
+  laneSystem: {fileID: 1390585778}
+--- !u!4 &1146173218
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1146173214}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1246977947
 GameObject:
   m_ObjectHideFlags: 0
@@ -1059,7 +1144,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrafficSpawner
   laneSystem: {fileID: 1390585778}
-  spawnPlanner: {fileID: 1400229568}
   trafficPrefabs:
   - prefab: {fileID: 3939303659938814717, guid: bbef8c5f8180e7340858dd355add14c0, type: 3}
     spawnWeight: 70
@@ -1212,57 +1296,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1807922454}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1400229567
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1400229569}
-  - component: {fileID: 1400229568}
-  m_Layer: 0
-  m_Name: TrafficSpawnPlanner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1400229568
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1400229567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 674a0ee52d7992a49b300244d9b144a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TrafficSpawnPlanner
-  laneSystem: {fileID: 1390585778}
-  playerLaneTracker: {fileID: 560615493}
-  predictionTime: 3
-  timeStep: 0.25
-  laneChangeTime: 0.25
-  dangerZoneAbovePlayer: 2.2
-  dangerZoneBelowPlayer: 1.2
---- !u!4 &1400229569
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1400229567}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1839110610}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1416927367
 GameObject:
@@ -1432,7 +1465,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1246977949}
-  - {fileID: 1400229569}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2000526171
@@ -1479,3 +1511,4 @@ SceneRoots:
   - {fileID: 1839110610}
   - {fileID: 1807922454}
   - {fileID: 2000526172}
+  - {fileID: 1146173218}

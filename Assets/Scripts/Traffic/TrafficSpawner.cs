@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TrafficSpawner : MonoBehaviour
+public class TrafficSpawner : MonoBehaviour, ISpawnRequestSource<TrafficSpawnRequest>, ISpawnExecutor<TrafficSpawnRequest>
 {
     [System.Serializable]
     private class TrafficSpawnEntry
@@ -14,7 +14,6 @@ public class TrafficSpawner : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private LaneSystem laneSystem;
-    [SerializeField] private TrafficSpawnPlanner spawnPlanner;
 
     [Header("Traffic")]
     [SerializeField] private TrafficSpawnEntry[] trafficPrefabs;
@@ -22,42 +21,19 @@ public class TrafficSpawner : MonoBehaviour
     [Header("Spawning")]
     [SerializeField] private float spawnInterval = 1.1f;
 
-    private float timer;
+    public float SpawnInterval => spawnInterval;
 
-    private void Update()
+    private void Awake()
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
-            return;
-
-        timer += Time.deltaTime;
-
-        if (timer >= spawnInterval)
-        {
-            TrySpawnTraffic();
-            timer = 0f;
-        }
+        laneSystem ??= FindAnyObjectByType<LaneSystem>();
     }
 
-    private void TrySpawnTraffic()
+    public List<TrafficSpawnRequest> BuildSpawnRequests(float spawnTime)
     {
-        List<SpawnOption> options = GenerateSpawnOptions();
-        Shuffle(options);
+        List<TrafficSpawnRequest> requests = new List<TrafficSpawnRequest>();
 
-        foreach (SpawnOption option in options)
-        {
-            if (spawnPlanner.IsSpawnFair(option.TrafficPrefab, option.LaneIndex))
-            {
-                SpawnTraffic(option.TrafficPrefab, option.LaneIndex);
-                return;
-            }
-        }
-
-        // Ako nijedna opcija nije fer, ne spawnujemo nista.
-    }
-
-    private List<SpawnOption> GenerateSpawnOptions()
-    {
-        List<SpawnOption> options = new List<SpawnOption>();
+        if (laneSystem == null)
+            return requests;
 
         for (int laneIndex = 0; laneIndex < laneSystem.LaneCount; laneIndex++)
         {
@@ -66,17 +42,13 @@ public class TrafficSpawner : MonoBehaviour
             if (selectedPrefab == null)
                 continue;
 
-            options.Add(new SpawnOption
-            {
-                TrafficPrefab = selectedPrefab,
-                LaneIndex = laneIndex
-            });
+            requests.Add(new TrafficSpawnRequest(selectedPrefab, laneIndex, spawnTime));
         }
 
-        return options;
+        return requests;
     }
 
-    private GameObject GetRandomTrafficPrefabByWeight()
+    public GameObject GetRandomTrafficPrefabByWeight()
     {
         float totalWeight = 0f;
 
@@ -114,42 +86,41 @@ public class TrafficSpawner : MonoBehaviour
         return null;
     }
 
-    private void SpawnTraffic(GameObject trafficPrefab, int laneIndex)
+    public bool CanExecuteSpawn(TrafficSpawnRequest request)
     {
-        TrafficVehicle trafficData = trafficPrefab.GetComponent<TrafficVehicle>();
+        return request != null &&
+               laneSystem != null &&
+               request.Prefab != null &&
+               request.LaneIndex >= 0 &&
+               request.LaneIndex < laneSystem.LaneCount;
+    }
+
+    public bool ExecuteSpawn(TrafficSpawnRequest request)
+    {
+        if (!CanExecuteSpawn(request))
+        {
+            Debug.LogWarning("TrafficSpawner: LaneSystem is not assigned.");
+            return false;
+        }
+
+        TrafficVehicle trafficData = request.Prefab.GetComponent<TrafficVehicle>();
 
         if (trafficData == null)
         {
             Debug.LogWarning("Traffic prefab nema TrafficVehicle script.");
-            return;
+            return false;
         }
 
-        float laneX = laneSystem.GetLaneX(laneIndex);
+        float laneX = laneSystem.GetLaneX(request.LaneIndex);
         float spawnY = laneSystem.GetSpawnY(trafficData);
 
         Vector3 spawnPosition = new Vector3(laneX, spawnY, 0f);
 
-        GameObject spawnedTraffic = Instantiate(trafficPrefab, spawnPosition, Quaternion.identity);
+        GameObject spawnedTraffic = Instantiate(request.Prefab, spawnPosition, Quaternion.identity);
 
         TrafficVehicle trafficVehicle = spawnedTraffic.GetComponent<TrafficVehicle>();
-        trafficVehicle.Initialize(laneIndex, laneSystem);
-    }
+        trafficVehicle.Initialize(request.LaneIndex, laneSystem);
 
-    private void Shuffle(List<SpawnOption> options)
-    {
-        for (int i = 0; i < options.Count; i++)
-        {
-            int randomIndex = Random.Range(i, options.Count);
-
-            SpawnOption temp = options[i];
-            options[i] = options[randomIndex];
-            options[randomIndex] = temp;
-        }
-    }
-
-    private struct SpawnOption
-    {
-        public GameObject TrafficPrefab;
-        public int LaneIndex;
+        return true;
     }
 }

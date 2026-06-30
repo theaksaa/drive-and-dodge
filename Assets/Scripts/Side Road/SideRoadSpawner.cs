@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class SideRoadSpawner : MonoBehaviour
+public class SideRoadSpawner : MonoBehaviour, ISpawnExecutor<SideRoadSpawnRequest>, ISpawnTimer
 {
     [Header("References")]
     [SerializeField] private LaneSystem laneSystem;
@@ -19,8 +19,7 @@ public class SideRoadSpawner : MonoBehaviour
     [Tooltip("Koliko trigger ulazi preko cyan linije ka glavnom putu.")]
     [SerializeField] private float triggerOverlapIntoMainRoad = 0.5f;
 
-    private float timer;
-    private float nextSpawnTime;
+    public float SideRoadHeight => sideRoadHeight;
 
     private void Awake()
     {
@@ -28,51 +27,33 @@ public class SideRoadSpawner : MonoBehaviour
             laneSystem = FindAnyObjectByType<LaneSystem>();
     }
 
-    private void Start()
+    public bool CanExecuteSpawn(SideRoadSpawnRequest request)
     {
-        SetNextSpawnTime();
-    }
-
-    private void Update()
-    {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
-            return;
+        if (request == null)
+            return false;
 
         if (laneSystem == null || sideRoadPrefab == null)
-            return;
+            return false;
 
-        timer += Time.deltaTime;
-
-        if (timer < nextSpawnTime)
-            return;
-
-        TrySpawnSideRoad();
-
-        timer = 0f;
-        SetNextSpawnTime();
-    }
-
-    private void TrySpawnSideRoad()
-    {
         if (preventMultipleVisibleSideRoads && SideRoad.VisibleSideRoadCount > 0)
-            return;
+            return false;
 
-        SideRoadDirection direction = Random.value < 0.5f
-            ? SideRoadDirection.Left
-            : SideRoadDirection.Right;
-
-        SpawnSideRoad(direction);
+        return true;
     }
 
-    private void SpawnSideRoad(SideRoadDirection direction)
+    public bool ExecuteSpawn(SideRoadSpawnRequest request)
     {
+        if (!CanExecuteSpawn(request))
+            return false;
+
+        SideRoadDirection direction = request.SideDirection;
         float centerX = laneSystem.GetSideRoadCenterX(direction);
         float width = laneSystem.GetSideRoadWidth(direction);
 
         if (width <= 0f)
         {
             Debug.LogWarning("SideRoadSpawner: Side road width is 0 or less. Check LaneSystem margins.");
-            return;
+            return false;
         }
 
         float spawnY = laneSystem.GetTopY() + sideRoadHeight / 2f + spawnYExtraOffset;
@@ -89,10 +70,21 @@ public class SideRoadSpawner : MonoBehaviour
             sideRoadHeight,
             triggerOverlapIntoMainRoad
         );
+
+        return true;
     }
 
-    private void SetNextSpawnTime()
+    public float GetNextSpawnDelay()
     {
-        nextSpawnTime = Random.Range(minSpawnInterval, maxSpawnInterval);
+        return Random.Range(minSpawnInterval, maxSpawnInterval);
+    }
+
+    public float GetTimeUntilReachingY(float worldY, float moveSpeed)
+    {
+        if (laneSystem == null || moveSpeed <= 0f)
+            return float.PositiveInfinity;
+
+        float spawnY = laneSystem.GetTopY() + sideRoadHeight / 2f + spawnYExtraOffset;
+        return Mathf.Max(0f, (spawnY - worldY) / moveSpeed);
     }
 }

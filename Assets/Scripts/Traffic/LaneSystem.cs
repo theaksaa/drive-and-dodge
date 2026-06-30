@@ -31,9 +31,11 @@ public class LaneSystem : MonoBehaviour
 
     public float RoadWidth => laneCount * laneWidth;
 
+    // Cyan linije
     public float RoadLeftX => -RoadWidth / 2f;
     public float RoadRightX => RoadWidth / 2f;
 
+    // Green linije
     public float CameraAreaLeftX => RoadLeftX - leftMargin;
     public float CameraAreaRightX => RoadRightX + rightMargin;
 
@@ -94,6 +96,36 @@ public class LaneSystem : MonoBehaviour
         float maxX = RoadRightX - objectHalfWidth;
 
         return Mathf.Clamp(worldX, minX, maxX);
+    }
+
+    public float GetClampedXInsideAllowedArea(float worldX, float objectHalfWidth = 0f)
+    {
+        float minX = RoadLeftX + objectHalfWidth;
+        float maxX = RoadRightX - objectHalfWidth;
+
+        if (SideRoad.CanUseLeftSideRoad)
+            minX = CameraAreaLeftX + objectHalfWidth;
+
+        if (SideRoad.CanUseRightSideRoad)
+            maxX = CameraAreaRightX - objectHalfWidth;
+
+        return Mathf.Clamp(worldX, minX, maxX);
+    }
+
+    public float GetSideRoadCenterX(SideRoadDirection direction)
+    {
+        if (direction == SideRoadDirection.Left)
+            return (CameraAreaLeftX + RoadLeftX) / 2f;
+
+        return (RoadRightX + CameraAreaRightX) / 2f;
+    }
+
+    public float GetSideRoadWidth(SideRoadDirection direction)
+    {
+        if (direction == SideRoadDirection.Left)
+            return Mathf.Abs(RoadLeftX - CameraAreaLeftX);
+
+        return Mathf.Abs(CameraAreaRightX - RoadRightX);
     }
 
     public float GetSpawnY(TrafficVehicle trafficVehicle)

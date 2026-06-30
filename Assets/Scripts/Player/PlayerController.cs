@@ -248,7 +248,7 @@ public class PlayerController : MonoBehaviour
 
         if (laneSystem != null)
         {
-            pos.x = laneSystem.GetClampedXInsideRoad(pos.x, halfWidth);
+            pos.x = laneSystem.GetClampedXInsideAllowedArea(pos.x, halfWidth);
         }
         else
         {

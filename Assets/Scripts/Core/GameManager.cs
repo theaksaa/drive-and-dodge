@@ -9,9 +9,9 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver { get; private set; }
 
     [Header("Global Speed")]
-    [SerializeField] private float startGameSpeed = 4f;
-    [SerializeField] private float maxGameSpeed = 12f;
-    [SerializeField] private float speedIncreasePerSecond = 0.05f;
+    [SerializeField] private float startGameSpeed = 6f;
+    [SerializeField] private float maxGameSpeed = 10f;
+    [SerializeField] private float speedIncreasePerSecond = 0.02f;
 
     public float CurrentGameSpeed { get; private set; }
     public float MaxGameSpeed => maxGameSpeed;

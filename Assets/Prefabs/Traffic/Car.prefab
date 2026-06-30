@@ -179,4 +179,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 720a61c2635f3894cace3636a134f8eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrafficVehicle
-  speedOffset: 4
+  speedOffset: 1

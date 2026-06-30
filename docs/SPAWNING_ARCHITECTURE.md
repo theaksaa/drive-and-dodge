@@ -15,13 +15,13 @@ Main idea:
 - concrete spawners only execute the spawn
 
 ## Main Files
-- [Assets/Scripts/Spawning/SpawnDirector.cs](/C:/Users/aksaa/Unity/drive-and-dodge/Assets/Scripts/Spawning/SpawnDirector.cs)
-- [Assets/Scripts/Spawning/SpawnSafetyPlanner.cs](/C:/Users/aksaa/Unity/drive-and-dodge/Assets/Scripts/Spawning/SpawnSafetyPlanner.cs)
-- [Assets/Scripts/Spawning/SpawnReservationMap.cs](/C:/Users/aksaa/Unity/drive-and-dodge/Assets/Scripts/Spawning/SpawnReservationMap.cs)
-- [Assets/Scripts/Spawning/ISpawnContracts.cs](/C:/Users/aksaa/Unity/drive-and-dodge/Assets/Scripts/Spawning/ISpawnContracts.cs)
-- [Assets/Scripts/Spawning/SpawnRequest.cs](/C:/Users/aksaa/Unity/drive-and-dodge/Assets/Scripts/Spawning/SpawnRequest.cs)
-- [Assets/Scripts/Traffic/TrafficSpawner.cs](/C:/Users/aksaa/Unity/drive-and-dodge/Assets/Scripts/Traffic/TrafficSpawner.cs)
-- [Assets/Scripts/Side Road/SideRoadSpawner.cs](/C:/Users/aksaa/Unity/drive-and-dodge/Assets/Scripts/Side%20Road/SideRoadSpawner.cs)
+- [Assets/Scripts/Spawning/SpawnDirector.cs](../Assets/Scripts/Spawning/SpawnDirector.cs)
+- [Assets/Scripts/Spawning/SpawnSafetyPlanner.cs](../Assets/Scripts/Spawning/SpawnSafetyPlanner.cs)
+- [Assets/Scripts/Spawning/SpawnReservationMap.cs](../Assets/Scripts/Spawning/SpawnReservationMap.cs)
+- [Assets/Scripts/Spawning/ISpawnContracts.cs](../Assets/Scripts/Spawning/ISpawnContracts.cs)
+- [Assets/Scripts/Spawning/SpawnRequest.cs](../Assets/Scripts/Spawning/SpawnRequest.cs)
+- [Assets/Scripts/Traffic/TrafficSpawner.cs](../Assets/Scripts/Traffic/TrafficSpawner.cs)
+- [Assets/Scripts/Side Road/SideRoadSpawner.cs](../Assets/Scripts/Side%20Road/SideRoadSpawner.cs)
 
 ## SpawnDirector
 `SpawnDirector` is the brain.

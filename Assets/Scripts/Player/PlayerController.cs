@@ -292,17 +292,4 @@ public class PlayerController : MonoBehaviour
             topRight.x - halfWidth - screenPadding
         );
     }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        Debug.Log("Trigger detected with: " + other.gameObject.name);
-
-        if (other.CompareTag("Traffic"))
-        {
-            Debug.Log("Hit traffic");
-
-            if (GameManager.Instance != null)
-                GameManager.Instance.GameOver();
-        }
-    }
 }

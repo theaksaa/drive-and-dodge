@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4760488187625676841}
   m_Layer: 0
   m_Name: NearMissZone
-  m_TagString: Untagged
+  m_TagString: NearMissZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -92,6 +92,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NearMissZone
   quality: 0
+  baseNearMissScore: 100
 --- !u!1 &3939303659938814717
 GameObject:
   m_ObjectHideFlags: 0
@@ -105,6 +106,7 @@ GameObject:
   - component: {fileID: 5179687677147699615}
   - component: {fileID: 8848516600251875301}
   - component: {fileID: 7888159174073173631}
+  - component: {fileID: 6821519968309266322}
   m_Layer: 0
   m_Name: Motorcycle
   m_TagString: Traffic
@@ -273,3 +275,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrafficVehicle
   speedOffset: 0.5
+--- !u!114 &6821519968309266322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3939303659938814717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c619cb2d31d71474a82ae40e5cb2d8f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageDealer
+  damage: 15
+  instantKill: 0
+  disableAfterHit: 1

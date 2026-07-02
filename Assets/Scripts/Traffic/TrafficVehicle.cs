@@ -6,21 +6,138 @@ public class TrafficVehicle : MonoBehaviour
     [SerializeField] private float speedOffset = 0f;
     [SerializeField] private float minMoveSpeed = 3f;
 
+    [Header("Lane Change")]
+    [SerializeField] [Range(0f, 1f)] private float laneChangeProbability = 0.2f;
+    [SerializeField] private float minLaneChangeDelay = 0.45f;
+    [SerializeField] private float maxLaneChangeDelay = 1.3f;
+    [SerializeField] private float defaultLaneChangeDuration = 0.45f;
+    [SerializeField] private float laneChangeSafetyPadding = 0.35f;
+    [SerializeField] private int laneSafetySamples = 5;
+
+    [Header("Blinkers")]
+    [SerializeField] private float blinkerInterval = 0.09f;
+    [SerializeField] private float preLaneChangeBlinkDuration = 2f;
+
     public float SpeedOffset => speedOffset;
     public int LaneIndex { get; private set; } = -1;
+    public bool HasPlannedLaneChange => hasPlannedLaneChange;
+    public int PlannedTargetLaneIndex => plannedTargetLaneIndex;
+    public float PlannedLaneChangeStartDelay => plannedLaneChangeStartDelay;
+    public float PlannedLaneChangeDuration => plannedLaneChangeDuration;
 
     private Camera mainCamera;
     private LaneSystem laneSystem;
+    private SpriteRenderer[] leftBlinkers;
+    private SpriteRenderer[] rightBlinkers;
+
+    private bool hasPlannedLaneChange;
+    private int plannedTargetLaneIndex = -1;
+    private float plannedLaneChangeStartDelay;
+    private float plannedLaneChangeDuration;
+    private float initializedAtTime;
+    private float laneChangeStartedAtTime;
+    private float laneChangeStartX;
+    private float laneChangeTargetX;
+    private int laneChangeSourceLaneIndex = -1;
+    private bool laneChangeInProgress;
+    private bool laneChangeCompleted;
 
     private void Awake()
     {
         mainCamera = Camera.main;
+        leftBlinkers = GetBlinkers("Blinkers/Left");
+        rightBlinkers = GetBlinkers("Blinkers/Right");
+        SetBlinkersActive(false, false);
     }
 
-    public void Initialize(int laneIndex, LaneSystem laneSystem)
+    public bool TryCreateLaneChangePlan(
+        int laneIndex,
+        int laneCount,
+        out int targetLaneIndex,
+        out float startDelay,
+        out float duration)
+    {
+        targetLaneIndex = laneIndex;
+        startDelay = 0f;
+        duration = 0f;
+
+        if (laneCount <= 1 || laneIndex < 0 || laneIndex >= laneCount)
+            return false;
+
+        if (laneChangeProbability <= 0f || Random.value > laneChangeProbability)
+            return false;
+
+        int direction = 0;
+
+        if (laneIndex == 0)
+        {
+            direction = 1;
+        }
+        else if (laneIndex == laneCount - 1)
+        {
+            direction = -1;
+        }
+        else
+        {
+            direction = Random.value < 0.5f ? -1 : 1;
+        }
+
+        targetLaneIndex = laneIndex + direction;
+        startDelay = Random.Range(minLaneChangeDelay, Mathf.Max(minLaneChangeDelay, maxLaneChangeDelay));
+        duration = Mathf.Max(0.05f, defaultLaneChangeDuration);
+        return true;
+    }
+
+    public void Initialize(
+        int laneIndex,
+        LaneSystem laneSystem,
+        bool hasLaneChangePlan = false,
+        int targetLaneIndex = -1,
+        float laneChangeStartDelay = 0f,
+        float laneChangeDuration = 0f)
     {
         LaneIndex = laneIndex;
         this.laneSystem = laneSystem;
+        initializedAtTime = Time.time;
+
+        this.hasPlannedLaneChange = hasLaneChangePlan && targetLaneIndex != laneIndex;
+        plannedTargetLaneIndex = this.hasPlannedLaneChange ? targetLaneIndex : -1;
+        plannedLaneChangeStartDelay = this.hasPlannedLaneChange ? Mathf.Max(0f, laneChangeStartDelay) : 0f;
+        plannedLaneChangeDuration = this.hasPlannedLaneChange
+            ? Mathf.Max(0.05f, laneChangeDuration)
+            : 0f;
+
+        laneChangeSourceLaneIndex = laneIndex;
+        laneChangeInProgress = false;
+        laneChangeCompleted = false;
+        SetBlinkersActive(false, false);
+    }
+
+    public bool TryGetLaneChangePrediction(
+        out int targetLaneIndex,
+        out float startDelay,
+        out float duration)
+    {
+        targetLaneIndex = -1;
+        startDelay = 0f;
+        duration = 0f;
+
+        if (!hasPlannedLaneChange || plannedTargetLaneIndex < 0 || laneChangeCompleted)
+            return false;
+
+        targetLaneIndex = plannedTargetLaneIndex;
+
+        if (laneChangeInProgress)
+        {
+            startDelay = 0f;
+            duration = Mathf.Max(0f, plannedLaneChangeDuration - (Time.time - laneChangeStartedAtTime));
+            return duration > 0f;
+        }
+
+        float elapsedSinceSpawn = Time.time - initializedAtTime;
+        startDelay = Mathf.Max(0f, plannedLaneChangeStartDelay - elapsedSinceSpawn);
+        duration = plannedLaneChangeDuration;
+        return true;
     }
 
     private void Update()
@@ -28,8 +145,167 @@ public class TrafficVehicle : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
             return;
 
+        UpdateLaneChange();
         MoveDown();
         DestroyIfOutsideScreen();
+    }
+
+    private void UpdateLaneChange()
+    {
+        if (!hasPlannedLaneChange || plannedTargetLaneIndex < 0 || laneChangeCompleted)
+        {
+            SetBlinkersActive(false, false);
+            return;
+        }
+
+        if (!laneChangeInProgress)
+        {
+            float elapsedSinceSpawn = Time.time - initializedAtTime;
+            float blinkStartTime = Mathf.Max(0f, plannedLaneChangeStartDelay - preLaneChangeBlinkDuration);
+
+            if (elapsedSinceSpawn < blinkStartTime)
+            {
+                SetBlinkersActive(false, false);
+                return;
+            }
+
+            UpdateBlinkers();
+
+            if (elapsedSinceSpawn < plannedLaneChangeStartDelay)
+                return;
+
+            if (CanStartLaneChange())
+                BeginLaneChange();
+
+            return;
+        }
+
+        UpdateBlinkers();
+
+        float elapsedSinceStart = Time.time - laneChangeStartedAtTime;
+        float progress = Mathf.Clamp01(elapsedSinceStart / plannedLaneChangeDuration);
+        Vector3 position = transform.position;
+        position.x = Mathf.Lerp(laneChangeStartX, laneChangeTargetX, progress);
+        transform.position = position;
+
+        if (progress >= 1f)
+        {
+            LaneIndex = plannedTargetLaneIndex;
+            laneChangeInProgress = false;
+            laneChangeCompleted = true;
+            hasPlannedLaneChange = false;
+            plannedTargetLaneIndex = -1;
+            SetBlinkersActive(false, false);
+        }
+    }
+
+    private void BeginLaneChange()
+    {
+        laneChangeInProgress = true;
+        laneChangeStartedAtTime = Time.time;
+        laneChangeSourceLaneIndex = LaneIndex;
+        laneChangeStartX = transform.position.x;
+        laneChangeTargetX = laneSystem != null
+            ? laneSystem.GetLaneX(plannedTargetLaneIndex)
+            : transform.position.x;
+    }
+
+    private bool CanStartLaneChange()
+    {
+        if (laneSystem == null)
+            return false;
+
+        if (plannedTargetLaneIndex < 0 || plannedTargetLaneIndex >= laneSystem.LaneCount)
+            return false;
+
+        TrafficVehicle[] activeTraffic = FindObjectsByType<TrafficVehicle>();
+        float selfHalfLength = GetHalfLength();
+        int samples = Mathf.Max(2, laneSafetySamples);
+
+        for (int sampleIndex = 0; sampleIndex < samples; sampleIndex++)
+        {
+            float sampleT = plannedLaneChangeDuration * sampleIndex / (samples - 1);
+
+            float selfFutureY = transform.position.y - GetFinalMoveSpeed() * sampleT;
+
+            foreach (TrafficVehicle other in activeTraffic)
+            {
+                if (other == null || other == this)
+                    continue;
+
+                if (!other.OccupiesLaneAtTime(plannedTargetLaneIndex, sampleT))
+                    continue;
+
+                float otherFutureY = other.transform.position.y - other.GetFinalMoveSpeed() * sampleT;
+                float requiredGap = selfHalfLength + other.GetHalfLength() + laneChangeSafetyPadding;
+
+                if (Mathf.Abs(otherFutureY - selfFutureY) < requiredGap)
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool OccupiesLaneAtTime(int laneIndex, float futureTime)
+    {
+        if (laneChangeInProgress)
+        {
+            float remainingTime = Mathf.Max(0f, plannedLaneChangeDuration - (Time.time - laneChangeStartedAtTime));
+
+            if (futureTime < remainingTime)
+                return laneIndex == laneChangeSourceLaneIndex || laneIndex == plannedTargetLaneIndex;
+
+            return laneIndex == plannedTargetLaneIndex;
+        }
+
+        if (hasPlannedLaneChange && plannedTargetLaneIndex >= 0)
+        {
+            float elapsedSinceSpawn = Time.time - initializedAtTime;
+            float waitUntilStart = Mathf.Max(0f, plannedLaneChangeStartDelay - elapsedSinceSpawn);
+
+            if (futureTime < waitUntilStart)
+                return laneIndex == LaneIndex;
+
+            return laneIndex == LaneIndex || laneIndex == plannedTargetLaneIndex;
+        }
+
+        return laneIndex == LaneIndex;
+    }
+
+    private void UpdateBlinkers()
+    {
+        bool blinkOn = Mathf.Repeat(Time.time, blinkerInterval * 2f) < blinkerInterval;
+        bool wantsLeft = plannedTargetLaneIndex < LaneIndex;
+        bool wantsRight = plannedTargetLaneIndex > LaneIndex;
+
+        SetBlinkersActive(wantsLeft && blinkOn, wantsRight && blinkOn);
+    }
+
+    private void SetBlinkersActive(bool leftActive, bool rightActive)
+    {
+        SetRendererGroupEnabled(leftBlinkers, leftActive);
+        SetRendererGroupEnabled(rightBlinkers, rightActive);
+    }
+
+    private static void SetRendererGroupEnabled(SpriteRenderer[] renderers, bool isEnabled)
+    {
+        if (renderers == null)
+            return;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+                renderers[i].enabled = isEnabled;
+        }
+    }
+
+    private SpriteRenderer[] GetBlinkers(string relativePath)
+    {
+        Transform blinkerRoot = transform.Find(relativePath);
+        return blinkerRoot != null
+            ? blinkerRoot.GetComponentsInChildren<SpriteRenderer>(true)
+            : System.Array.Empty<SpriteRenderer>();
     }
 
     private void MoveDown()

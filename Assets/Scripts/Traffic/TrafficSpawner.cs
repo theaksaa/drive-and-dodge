@@ -42,7 +42,27 @@ public class TrafficSpawner : MonoBehaviour, ISpawnRequestSource<TrafficSpawnReq
             if (selectedPrefab == null)
                 continue;
 
-            requests.Add(new TrafficSpawnRequest(selectedPrefab, laneIndex, spawnTime));
+            TrafficVehicle trafficData = selectedPrefab.GetComponent<TrafficVehicle>();
+            int targetLaneIndex = laneIndex;
+            float laneChangeStartDelay = 0f;
+            float laneChangeDuration = 0f;
+
+            bool hasLaneChangePlan = trafficData != null &&
+                                     trafficData.TryCreateLaneChangePlan(
+                                         laneIndex,
+                                         laneSystem.LaneCount,
+                                         out targetLaneIndex,
+                                         out laneChangeStartDelay,
+                                         out laneChangeDuration);
+
+            requests.Add(new TrafficSpawnRequest(
+                selectedPrefab,
+                laneIndex,
+                spawnTime,
+                hasLaneChangePlan,
+                hasLaneChangePlan ? targetLaneIndex : laneIndex,
+                hasLaneChangePlan ? laneChangeStartDelay : 0f,
+                hasLaneChangePlan ? laneChangeDuration : 0f));
         }
 
         return requests;
@@ -119,7 +139,13 @@ public class TrafficSpawner : MonoBehaviour, ISpawnRequestSource<TrafficSpawnReq
         GameObject spawnedTraffic = Instantiate(request.Prefab, spawnPosition, Quaternion.identity);
 
         TrafficVehicle trafficVehicle = spawnedTraffic.GetComponent<TrafficVehicle>();
-        trafficVehicle.Initialize(request.LaneIndex, laneSystem);
+        trafficVehicle.Initialize(
+            request.LaneIndex,
+            laneSystem,
+            request.HasLaneChangePlan,
+            request.TargetLaneIndex,
+            request.LaneChangeStartDelay,
+            request.LaneChangeDuration);
 
         return true;
     }

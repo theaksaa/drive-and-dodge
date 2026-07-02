@@ -51,7 +51,7 @@ public class SpawnSafetyPlanner : MonoBehaviour
 
         List<TrafficSnapshot> snapshots = CreateTrafficSnapshots();
 
-        if (WillCollideWithTrafficInSameLane(snapshots, candidate))
+        if (WillCollideWithTraffic(snapshots, candidate))
             return false;
 
         if (ViolatesLaneReservations(candidate, request.SpawnTime))
@@ -71,15 +71,18 @@ public class SpawnSafetyPlanner : MonoBehaviour
         if (!TryBuildTrafficSnapshot(request, out TrafficSnapshot snapshot))
             return;
 
-        if (!TryGetDangerWindow(snapshot, request.SpawnTime, out float blockedStartTime, out float blockedEndTime))
-            return;
+        for (int lane = 0; lane < laneSystem.LaneCount; lane++)
+        {
+            if (!TryGetDangerWindowForLane(snapshot, request.SpawnTime, lane, out float blockedStartTime, out float blockedEndTime))
+                continue;
 
-        reservationMap?.TryReserveLane(
-            snapshot.LaneIndex,
-            blockedStartTime,
-            blockedEndTime,
-            SpawnReservationMap.ReservationKind.Blocked,
-            "Traffic");
+            reservationMap?.TryReserveLane(
+                lane,
+                blockedStartTime,
+                blockedEndTime,
+                SpawnReservationMap.ReservationKind.Blocked,
+                "Traffic");
+        }
     }
 
     public bool TryCreateSideRoadPlan(SideRoadSpawnRequest request, out SideRoadSpawnPlan plan)
@@ -193,7 +196,7 @@ public class SpawnSafetyPlanner : MonoBehaviour
 
         foreach (TrafficSnapshot trafficVehicle in trafficVehicles)
         {
-            if (trafficVehicle.LaneIndex != laneIndex)
+            if (!OccupiesLaneAtTime(trafficVehicle, laneIndex, futureTime))
                 continue;
 
             float futureY = GetFutureTrafficY(trafficVehicle, futureTime);
@@ -238,11 +241,18 @@ public class SpawnSafetyPlanner : MonoBehaviour
             if (!overlapsDangerZone)
                 continue;
 
-            if (reservationMap.IsLaneReserved(
-                    traffic.LaneIndex,
-                    spawnTime + futureTime,
-                    SpawnReservationMap.ReservationKind.KeepClear))
+            GetOccupiedLaneRange(traffic, futureTime, out int minLane, out int maxLane);
+
+            for (int lane = minLane; lane <= maxLane; lane++)
             {
+                if (!reservationMap.IsLaneReserved(
+                        lane,
+                        spawnTime + futureTime,
+                        SpawnReservationMap.ReservationKind.KeepClear))
+                {
+                    continue;
+                }
+
                 return true;
             }
         }
@@ -268,6 +278,10 @@ public class SpawnSafetyPlanner : MonoBehaviour
         snapshot = new TrafficSnapshot
         {
             LaneIndex = request.LaneIndex,
+            HasLaneChangePlan = request.HasLaneChangePlan,
+            TargetLaneIndex = request.TargetLaneIndex,
+            LaneChangeStartDelay = request.LaneChangeStartDelay,
+            LaneChangeDuration = request.LaneChangeDuration,
             StartY = laneSystem.GetSpawnY(trafficData),
             SpeedOffset = trafficData.SpeedOffset,
             HalfLength = trafficData.GetHalfLength()
@@ -286,9 +300,18 @@ public class SpawnSafetyPlanner : MonoBehaviour
             if (trafficVehicle.LaneIndex < 0)
                 continue;
 
+            bool hasLaneChangePlan = trafficVehicle.TryGetLaneChangePrediction(
+                out int targetLaneIndex,
+                out float laneChangeStartDelay,
+                out float laneChangeDuration);
+
             snapshots.Add(new TrafficSnapshot
             {
                 LaneIndex = trafficVehicle.LaneIndex,
+                HasLaneChangePlan = hasLaneChangePlan,
+                TargetLaneIndex = hasLaneChangePlan ? targetLaneIndex : trafficVehicle.LaneIndex,
+                LaneChangeStartDelay = hasLaneChangePlan ? laneChangeStartDelay : 0f,
+                LaneChangeDuration = hasLaneChangePlan ? laneChangeDuration : 0f,
                 StartY = trafficVehicle.transform.position.y,
                 SpeedOffset = trafficVehicle.SpeedOffset,
                 HalfLength = trafficVehicle.GetHalfLength()
@@ -324,8 +347,13 @@ public class SpawnSafetyPlanner : MonoBehaviour
                     trafficTopY >= dangerBottomY &&
                     trafficBottomY <= dangerTopY;
 
-                if (overlapsDangerZone)
-                    blocked[step, trafficVehicle.LaneIndex] = true;
+                if (!overlapsDangerZone)
+                    continue;
+
+                GetOccupiedLaneRange(trafficVehicle, futureTime, out int minLane, out int maxLane);
+
+                for (int lane = minLane; lane <= maxLane; lane++)
+                    blocked[step, lane] = true;
             }
         }
 
@@ -413,41 +441,32 @@ public class SpawnSafetyPlanner : MonoBehaviour
         return false;
     }
 
-    private bool WillCollideWithTrafficInSameLane(List<TrafficSnapshot> existingTraffic, TrafficSnapshot newTraffic)
+    private bool WillCollideWithTraffic(List<TrafficSnapshot> existingTraffic, TrafficSnapshot newTraffic)
     {
+        int stepCount = Mathf.CeilToInt(predictionTime / timeStep) + 1;
+
         foreach (TrafficSnapshot existingVehicle in existingTraffic)
         {
-            if (existingVehicle.LaneIndex != newTraffic.LaneIndex)
-                continue;
+            for (int step = 0; step < stepCount; step++)
+            {
+                float futureTime = step * timeStep;
 
-            if (existingVehicle.StartY >= newTraffic.StartY)
-                continue;
+                if (!DoTrafficSnapshotsOverlapInAnyLane(existingVehicle, newTraffic, futureTime))
+                    continue;
 
-            float newTrafficSpeed = GetCurrentTrafficSpeed(newTraffic);
-            float existingTrafficSpeed = GetCurrentTrafficSpeed(existingVehicle);
-            float relativeSpeed = newTrafficSpeed - existingTrafficSpeed;
-
-            if (relativeSpeed <= 0f)
-                continue;
-
-            float newTrafficFrontY = newTraffic.StartY - newTraffic.HalfLength;
-            float existingTrafficBackY = existingVehicle.StartY + existingVehicle.HalfLength;
-            float gap = newTrafficFrontY - existingTrafficBackY;
-
-            if (gap <= 0f)
                 return true;
-
-            float timeUntilCatch = gap / relativeSpeed;
-            float timeUntilExistingTrafficLeaves = GetTimeUntilTrafficLeavesScreen(existingVehicle);
-
-            if (timeUntilCatch <= timeUntilExistingTrafficLeaves)
-                return true;
+            }
         }
 
         return false;
     }
 
-    private bool TryGetDangerWindow(TrafficSnapshot traffic, float spawnTime, out float startTime, out float endTime)
+    private bool TryGetDangerWindowForLane(
+        TrafficSnapshot traffic,
+        float spawnTime,
+        int laneIndex,
+        out float startTime,
+        out float endTime)
     {
         startTime = 0f;
         endTime = 0f;
@@ -471,45 +490,24 @@ public class SpawnSafetyPlanner : MonoBehaviour
                 trafficTopY >= dangerBottomY &&
                 trafficBottomY <= dangerTopY;
 
-            if (overlapsDangerZone)
+            if (!overlapsDangerZone || !OccupiesLaneAtTime(traffic, laneIndex, futureTime))
             {
-                if (!foundStart)
-                {
-                    startTime = spawnTime + futureTime;
-                    foundStart = true;
-                }
+                if (foundStart)
+                    break;
 
-                endTime = spawnTime + futureTime;
+                continue;
             }
-            else if (foundStart)
+
+            if (!foundStart)
             {
-                break;
+                startTime = spawnTime + futureTime;
+                foundStart = true;
             }
+
+            endTime = spawnTime + futureTime;
         }
 
         return foundStart;
-    }
-
-    private float GetTimeUntilTrafficLeavesScreen(TrafficSnapshot traffic)
-    {
-        float bottomY = laneSystem.GetBottomY();
-        float targetY = bottomY - traffic.HalfLength - 1f;
-
-        float minTime = 0f;
-        float maxTime = 30f;
-
-        for (int i = 0; i < 30; i++)
-        {
-            float midTime = (minTime + maxTime) * 0.5f;
-            float futureY = GetFutureTrafficY(traffic, midTime);
-
-            if (futureY <= targetY)
-                maxTime = midTime;
-            else
-                minTime = midTime;
-        }
-
-        return maxTime;
     }
 
     private float GetFutureTrafficY(TrafficSnapshot traffic, float futureTime)
@@ -544,11 +542,6 @@ public class SpawnSafetyPlanner : MonoBehaviour
         return distanceUntilMaxSpeed + maxVehicleSpeed * remainingTime;
     }
 
-    private float GetCurrentTrafficSpeed(TrafficSnapshot traffic)
-    {
-        return Mathf.Max(0f, GetCurrentGlobalSpeed() + traffic.SpeedOffset);
-    }
-
     private float GetCurrentGlobalSpeed()
     {
         return GameManager.Instance != null ? GameManager.Instance.CurrentGameSpeed : 4f;
@@ -567,8 +560,66 @@ public class SpawnSafetyPlanner : MonoBehaviour
     private struct TrafficSnapshot
     {
         public int LaneIndex;
+        public bool HasLaneChangePlan;
+        public int TargetLaneIndex;
+        public float LaneChangeStartDelay;
+        public float LaneChangeDuration;
         public float StartY;
         public float SpeedOffset;
         public float HalfLength;
+    }
+
+    private void GetOccupiedLaneRange(TrafficSnapshot traffic, float futureTime, out int minLane, out int maxLane)
+    {
+        minLane = traffic.LaneIndex;
+        maxLane = traffic.LaneIndex;
+
+        if (!traffic.HasLaneChangePlan || traffic.TargetLaneIndex == traffic.LaneIndex)
+            return;
+
+        if (futureTime < traffic.LaneChangeStartDelay)
+            return;
+
+        if (futureTime < traffic.LaneChangeStartDelay + traffic.LaneChangeDuration)
+        {
+            minLane = Mathf.Min(traffic.LaneIndex, traffic.TargetLaneIndex);
+            maxLane = Mathf.Max(traffic.LaneIndex, traffic.TargetLaneIndex);
+            return;
+        }
+
+        minLane = traffic.TargetLaneIndex;
+        maxLane = traffic.TargetLaneIndex;
+    }
+
+    private bool OccupiesLaneAtTime(TrafficSnapshot traffic, int laneIndex, float futureTime)
+    {
+        GetOccupiedLaneRange(traffic, futureTime, out int minLane, out int maxLane);
+        return laneIndex >= minLane && laneIndex <= maxLane;
+    }
+
+    private bool DoTrafficSnapshotsOverlapInAnyLane(
+        TrafficSnapshot firstTraffic,
+        TrafficSnapshot secondTraffic,
+        float futureTime)
+    {
+        GetOccupiedLaneRange(firstTraffic, futureTime, out int firstMinLane, out int firstMaxLane);
+        GetOccupiedLaneRange(secondTraffic, futureTime, out int secondMinLane, out int secondMaxLane);
+
+        bool sharesLane =
+            firstMinLane <= secondMaxLane &&
+            firstMaxLane >= secondMinLane;
+
+        if (!sharesLane)
+            return false;
+
+        float firstFutureY = GetFutureTrafficY(firstTraffic, futureTime);
+        float secondFutureY = GetFutureTrafficY(secondTraffic, futureTime);
+
+        float firstBottomY = firstFutureY - firstTraffic.HalfLength;
+        float firstTopY = firstFutureY + firstTraffic.HalfLength;
+        float secondBottomY = secondFutureY - secondTraffic.HalfLength;
+        float secondTopY = secondFutureY + secondTraffic.HalfLength;
+
+        return firstTopY >= secondBottomY && firstBottomY <= secondTopY;
     }
 }

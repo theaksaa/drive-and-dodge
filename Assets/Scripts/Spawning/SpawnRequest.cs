@@ -38,11 +38,19 @@ public sealed class TrafficSpawnRequest : SpawnRequestBase
         GameObject prefab,
         int laneIndex,
         float spawnTime,
+        bool hasLaneChangePlan,
+        int targetLaneIndex,
+        float laneChangeStartDelay,
+        float laneChangeDuration,
         SpawnSafetyMode safetyMode = SpawnSafetyMode.Required)
         : base(SpawnRequestType.Traffic, spawnTime, true, safetyMode)
     {
         Prefab = prefab;
         LaneIndex = laneIndex;
+        HasLaneChangePlan = hasLaneChangePlan;
+        TargetLaneIndex = targetLaneIndex;
+        LaneChangeStartDelay = laneChangeStartDelay;
+        LaneChangeDuration = laneChangeDuration;
 
         TrafficVehicle trafficVehicle = prefab != null ? prefab.GetComponent<TrafficVehicle>() : null;
         Height = trafficVehicle != null ? trafficVehicle.GetHalfLength() * 2f : 0f;
@@ -51,6 +59,10 @@ public sealed class TrafficSpawnRequest : SpawnRequestBase
 
     public GameObject Prefab { get; }
     public int LaneIndex { get; }
+    public bool HasLaneChangePlan { get; }
+    public int TargetLaneIndex { get; }
+    public float LaneChangeStartDelay { get; }
+    public float LaneChangeDuration { get; }
     public float Height { get; }
     public float Speed { get; }
 }

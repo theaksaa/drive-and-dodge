@@ -4,6 +4,7 @@ public class TrafficVehicle : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float speedOffset = 0f;
+    [SerializeField] private float minMoveSpeed = 3f;
 
     public float SpeedOffset => speedOffset;
     public int LaneIndex { get; private set; } = -1;
@@ -42,9 +43,11 @@ public class TrafficVehicle : MonoBehaviour
     {
         float globalSpeed = GameManager.Instance != null
             ? GameManager.Instance.CurrentGameSpeed
-            : 4f;
+            : minMoveSpeed;
 
-        return Mathf.Max(0f, globalSpeed + speedOffset);
+        float calculatedSpeed = globalSpeed + speedOffset;
+
+        return Mathf.Max(minMoveSpeed, calculatedSpeed);
     }
 
     public float GetHalfLength()

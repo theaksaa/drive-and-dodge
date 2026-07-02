@@ -20,6 +20,8 @@ public class GameManager : MonoBehaviour
     public float MaxGameSpeed => maxGameSpeed;
     public float SpeedIncreasePerSecond => speedIncreasePerSecond;
 
+    private bool canIncreaseGameSpeed = true;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -33,6 +35,7 @@ public class GameManager : MonoBehaviour
 
         CurrentGameSpeed = startGameSpeed;
         IsGameOver = false;
+        canIncreaseGameSpeed = true;
 
         if (comboSystem == null)
             comboSystem = FindFirstObjectByType<ComboSystem>();
@@ -43,7 +46,8 @@ public class GameManager : MonoBehaviour
         if (IsGameOver)
             return;
 
-        IncreaseGameSpeed();
+        if (canIncreaseGameSpeed)
+            IncreaseGameSpeed();
     }
 
     private void IncreaseGameSpeed()
@@ -86,5 +90,10 @@ public class GameManager : MonoBehaviour
     public void ResetGameSpeed()
     {
         CurrentGameSpeed = startGameSpeed;
+    }
+
+    public void SetSpeedIncreaseEnabled(bool enabled)
+    {
+        canIncreaseGameSpeed = enabled;
     }
 }

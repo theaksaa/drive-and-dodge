@@ -3,7 +3,8 @@ using UnityEngine;
 public enum SpawnRequestType
 {
     Traffic,
-    SideRoad
+    SideRoad,
+    Sign
 }
 
 public enum SpawnSafetyMode

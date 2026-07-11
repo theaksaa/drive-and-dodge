@@ -47,8 +47,15 @@ public class SideRoadSpawner : MonoBehaviour, ISpawnExecutor<SideRoadSpawnReques
         if (laneSystem == null || request.Prefab == null)
             return false;
 
-        if (preventMultipleVisibleSideRoads && SideRoad.VisibleSideRoadCount > 0)
-            return false;
+        if (preventMultipleVisibleSideRoads)
+        {
+            bool sameSideAlreadyVisible = request.SideDirection == SideRoadDirection.Left
+                ? SideRoad.VisibleLeftSideRoadCount > 0
+                : SideRoad.VisibleRightSideRoadCount > 0;
+
+            if (sameSideAlreadyVisible)
+                return false;
+        }
 
         return true;
     }
@@ -68,6 +75,30 @@ public class SideRoadSpawner : MonoBehaviour, ISpawnExecutor<SideRoadSpawnReques
         if (!TryGetRandomVariant(out SideRoadType sideRoadType, out SideRoad prefab))
             return false;
 
+        return TryCreateSpawnRequest(
+            sideRoadType,
+            prefab,
+            direction,
+            spawnTime,
+            timeToPlayerArea,
+            moveSpeed,
+            out request);
+    }
+
+    public bool TryCreateSpawnRequest(
+        SideRoadType sideRoadType,
+        SideRoad prefab,
+        SideRoadDirection direction,
+        float spawnTime,
+        float timeToPlayerArea,
+        float moveSpeed,
+        out SideRoadSpawnRequest request)
+    {
+        request = null;
+
+        if (laneSystem == null || prefab == null)
+            return false;
+
         float width = laneSystem.GetSideRoadWidth(direction);
 
         request = new SideRoadSpawnRequest(
@@ -81,6 +112,11 @@ public class SideRoadSpawner : MonoBehaviour, ISpawnExecutor<SideRoadSpawnReques
             moveSpeed);
 
         return true;
+    }
+
+    public bool TrySelectRandomVariant(out SideRoadType sideRoadType, out SideRoad prefab)
+    {
+        return TryGetRandomVariant(out sideRoadType, out prefab);
     }
 
     public bool ExecuteSpawn(SideRoadSpawnRequest request)

@@ -7,6 +7,8 @@ public class SideRoad : MonoBehaviour
     public static int ActiveLeftZones { get; private set; }
     public static int ActiveRightZones { get; private set; }
     public static int VisibleSideRoadCount { get; private set; }
+    public static int VisibleLeftSideRoadCount { get; private set; }
+    public static int VisibleRightSideRoadCount { get; private set; }
 
     public static bool CanUseLeftSideRoad => ActiveLeftZones > 0;
     public static bool CanUseRightSideRoad => ActiveRightZones > 0;
@@ -26,6 +28,7 @@ public class SideRoad : MonoBehaviour
     private SideRoadType sideRoadType;
     private bool playerInside;
     private bool wasCountedAsVisible;
+    private bool directionWasConfigured;
 
     public SideRoadDirection Direction => direction;
     public SideRoadType RoadType => sideRoadType;
@@ -77,7 +80,13 @@ public class SideRoad : MonoBehaviour
     {
         sideRoadType = type;
         direction = sideRoadDirection;
+        directionWasConfigured = true;
         despawnY = despawnPositionY;
+
+        if (direction == SideRoadDirection.Left)
+            VisibleLeftSideRoadCount++;
+        else
+            VisibleRightSideRoadCount++;
 
         transform.localScale = new Vector3(visualWidth, visualHeight, 1f);
 
@@ -152,6 +161,16 @@ public class SideRoad : MonoBehaviour
         {
             VisibleSideRoadCount = Mathf.Max(0, VisibleSideRoadCount - 1);
             wasCountedAsVisible = false;
+        }
+
+        if (directionWasConfigured)
+        {
+            if (direction == SideRoadDirection.Left)
+                VisibleLeftSideRoadCount = Mathf.Max(0, VisibleLeftSideRoadCount - 1);
+            else
+                VisibleRightSideRoadCount = Mathf.Max(0, VisibleRightSideRoadCount - 1);
+
+            directionWasConfigured = false;
         }
     }
 }

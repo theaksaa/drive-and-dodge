@@ -119,6 +119,54 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &29439298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 29439300}
+  - component: {fileID: 29439299}
+  m_Layer: 0
+  m_Name: RoadSignSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &29439299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29439298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a556d494b5593d44907cceaf625648c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoadSignSpawner
+  laneSystem: {fileID: 1390585778}
+  spawnYExtraOffset: 1
+  despawnYExtraOffset: 1
+  horizontalOffsetFromSideCenter: 0
+--- !u!4 &29439300
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29439298}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.50378, y: 0.64118, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2000526172}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &68349657
 GameObject:
   m_ObjectHideFlags: 0
@@ -1515,6 +1563,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1050439748}
   - component: {fileID: 1050439749}
+  - component: {fileID: 1050439750}
   m_Layer: 0
   m_Name: SideRoadSpawner
   m_TagString: Untagged
@@ -1574,6 +1623,88 @@ MonoBehaviour:
   preventMultipleVisibleSideRoads: 1
   sideRoadHeight: 2.5
   triggerOverlapIntoMainRoad: 0.5
+--- !u!114 &1050439750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1050439747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 241394384e821894bb233aeb0129768e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SideRoadEventSource
+  sideRoadSpawner: {fileID: 1050439749}
+  safetyPlanner: {fileID: 1146173216}
+  playerLaneTracker: {fileID: 560615493}
+  spawnWeight: 1
+  eventProfiles:
+  - sideRoadType: 0
+    warningProfile:
+      requireSigns: 1
+      warnings:
+      - distanceBeforeEvent: 500
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 300
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 100
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+  - sideRoadType: 1
+    warningProfile:
+      requireSigns: 1
+      warnings:
+      - distanceBeforeEvent: 500
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 300
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 100
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+  - sideRoadType: 2
+    warningProfile:
+      requireSigns: 1
+      warnings:
+      - distanceBeforeEvent: 500
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 300
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 100
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+  - sideRoadType: 3
+    warningProfile:
+      requireSigns: 1
+      warnings:
+      - distanceBeforeEvent: 500
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 300
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 100
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+  - sideRoadType: 4
+    warningProfile:
+      requireSigns: 1
+      warnings:
+      - distanceBeforeEvent: 500
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 300
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
+      - distanceBeforeEvent: 100
+        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
+        placement: 0
 --- !u!1 &1089537145
 GameObject:
   m_ObjectHideFlags: 0
@@ -1677,10 +1808,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnDirector
   trafficSpawner: {fileID: 1246977948}
-  sideRoadSpawner: {fileID: 1050439749}
+  roadSignSpawner: {fileID: 29439299}
   safetyPlanner: {fileID: 1146173216}
-  playerLaneTracker: {fileID: 560615493}
-  laneSystem: {fileID: 1390585778}
+  roadEventSources:
+  - {fileID: 1050439750}
+  minEventLeadDistance: 50
+  maxEventLeadDistance: 150
 --- !u!4 &1146173218
 Transform:
   m_ObjectHideFlags: 0
@@ -2153,7 +2286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FuelSystem
   maxFuel: 100
-  fuelDrainPerSecond: 6
+  fuelDrainPerSecond: 1
   slowdownPerSecond: 2
 --- !u!4 &1802633239
 Transform:
@@ -2405,6 +2538,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1050439748}
+  - {fileID: 29439300}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807

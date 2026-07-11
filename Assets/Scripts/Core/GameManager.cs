@@ -96,4 +96,18 @@ public class GameManager : MonoBehaviour
     {
         canIncreaseGameSpeed = enabled;
     }
+
+    public void ApplyEnvironment(EnvironmentDefinition environment)
+    {
+        if (environment == null)
+            return;
+
+        maxGameSpeed = Mathf.Max(0f, environment.MaxGameSpeed);
+        speedIncreasePerSecond = Mathf.Max(0f, environment.SpeedIncreasePerSecond);
+
+        if (environment.SetSpeedOnEnter)
+            SetGameSpeed(environment.SpeedOnEnter);
+        else
+            CurrentGameSpeed = Mathf.Min(CurrentGameSpeed, maxGameSpeed);
+    }
 }

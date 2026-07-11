@@ -15,6 +15,7 @@ public class FuelSystem : MonoBehaviour
     public bool IsOutOfFuel => CurrentFuel <= 0f;
 
     private bool hasStartedSlowdown;
+    private float consumptionMultiplier = 1f;
 
     private void Awake()
     {
@@ -38,7 +39,7 @@ public class FuelSystem : MonoBehaviour
 
     private void DrainFuel()
     {
-        CurrentFuel -= fuelDrainPerSecond * Time.deltaTime;
+        CurrentFuel -= fuelDrainPerSecond * consumptionMultiplier * Time.deltaTime;
         CurrentFuel = Mathf.Max(CurrentFuel, 0f);
 
         if (CurrentFuel <= 0f)
@@ -102,5 +103,10 @@ public class FuelSystem : MonoBehaviour
             GameManager.Instance.SetSpeedIncreaseEnabled(true);
 
         Debug.Log("Fuel tank full.");
+    }
+
+    public void SetConsumptionMultiplier(float multiplier)
+    {
+        consumptionMultiplier = Mathf.Max(0f, multiplier);
     }
 }

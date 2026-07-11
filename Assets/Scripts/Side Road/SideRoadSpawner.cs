@@ -11,27 +11,40 @@ public class SideRoadSpawner : MonoBehaviour, ISpawnExecutor<SideRoadSpawnReques
         SideRoadType.Forest
     };
 
-    [Header("References")]
-    [SerializeField] private LaneSystem laneSystem;
-    [SerializeField] private SideRoad sideRoadPrefab;
-
-    [Header("Variants")]
-    [SerializeField] private SideRoadSpawnEntry[] sideRoadVariants;
+    private LaneSystem laneSystem;
+    private SideRoad sideRoadPrefab;
+    private SideRoadSpawnEntry[] sideRoadVariants;
 
     [Header("Spawning")]
-    [SerializeField] private float minSpawnInterval = 5f;
-    [SerializeField] private float maxSpawnInterval = 9f;
-    [SerializeField] private float spawnYExtraOffset = 1.5f;
-    [SerializeField] private float despawnYExtraOffset = 1.5f;
-    [SerializeField] private bool preventMultipleVisibleSideRoads = true;
+    private float minSpawnInterval = 5f;
+    private float maxSpawnInterval = 9f;
+    private float spawnYExtraOffset = 1.5f;
+    private float despawnYExtraOffset = 1.5f;
+    private bool preventMultipleVisibleSideRoads = true;
 
     [Header("Side Road")]
-    [SerializeField] private float sideRoadHeight = 2.5f;
+    private float sideRoadHeight = 2.5f;
 
     [Tooltip("Koliko trigger ulazi preko cyan linije ka glavnom putu.")]
-    [SerializeField] private float triggerOverlapIntoMainRoad = 0.5f;
+    private float triggerOverlapIntoMainRoad = 0.5f;
 
     public float SideRoadHeight => sideRoadHeight;
+
+    public void ApplyConfig(EnvironmentSpawnerConfig config)
+    {
+        if (config == null)
+            return;
+
+        sideRoadPrefab = config.SideRoadPrefab;
+        sideRoadVariants = config.SideRoadVariants;
+        minSpawnInterval = Mathf.Max(0f, config.SideRoadMinSpawnInterval);
+        maxSpawnInterval = Mathf.Max(minSpawnInterval, config.SideRoadMaxSpawnInterval);
+        spawnYExtraOffset = Mathf.Max(0f, config.SideRoadSpawnYExtraOffset);
+        despawnYExtraOffset = Mathf.Max(0f, config.SideRoadDespawnYExtraOffset);
+        preventMultipleVisibleSideRoads = config.PreventMultipleVisibleSideRoads;
+        sideRoadHeight = Mathf.Max(0.01f, config.SideRoadHeight);
+        triggerOverlapIntoMainRoad = Mathf.Max(0f, config.SideRoadTriggerOverlap);
+    }
 
     private void Awake()
     {

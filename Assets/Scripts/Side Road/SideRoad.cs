@@ -24,6 +24,10 @@ public class SideRoad : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private BoxCollider2D triggerCollider;
 
+    [Header("Environment Transition")]
+    [Tooltip("Entering this side road switches to this environment. Leave empty for a normal side road.")]
+    [SerializeField] private EnvironmentDefinition destinationEnvironment;
+
     private SideRoadDirection direction;
     private SideRoadType sideRoadType;
     private bool playerInside;
@@ -32,6 +36,7 @@ public class SideRoad : MonoBehaviour
 
     public SideRoadDirection Direction => direction;
     public SideRoadType RoadType => sideRoadType;
+    public EnvironmentDefinition DestinationEnvironment => destinationEnvironment;
 
     private void Awake()
     {

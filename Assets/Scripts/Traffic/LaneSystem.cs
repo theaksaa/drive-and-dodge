@@ -41,6 +41,17 @@ public class LaneSystem : MonoBehaviour
 
     public float RequiredCameraWorldWidth => RoadWidth + leftMargin + rightMargin;
 
+    public void ApplyEnvironment(EnvironmentDefinition environment)
+    {
+        if (environment == null)
+            return;
+
+        laneCount = Mathf.Max(1, environment.LaneCount);
+        laneWidth = Mathf.Max(0.1f, environment.LaneWidth);
+        leftMargin = Mathf.Max(0f, environment.LeftMargin);
+        rightMargin = Mathf.Max(0f, environment.RightMargin);
+    }
+
     private void Awake()
     {
         mainCamera = Camera.main;

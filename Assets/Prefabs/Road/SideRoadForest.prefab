@@ -151,8 +151,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fa1374420b2a8041a6dba5837f689de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SideRoad
-  moveSpeed: 5
-  useGameSpeed: 1
+  fallbackMoveSpeed: 5
   despawnY: -8
   spriteRenderer: {fileID: 3196053357304750571}
   triggerCollider: {fileID: 592074100141232927}
+  destinationEnvironment: {fileID: 11400000, guid: bb8a05d233f7a0d438671617b2fe4dbe, type: 2}

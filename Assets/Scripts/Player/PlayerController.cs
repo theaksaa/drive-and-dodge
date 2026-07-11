@@ -35,6 +35,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 dragTargetPosition;
 
     private float lockedY;
+    private float environmentSpeedMultiplier = 1f;
 
     private void Awake()
     {
@@ -94,7 +95,7 @@ public class PlayerController : MonoBehaviour
 
         Vector2 input = joystick.Direction;
 
-        Vector3 movement = new Vector3(input.x, 0f, 0f) * moveSpeed * Time.deltaTime;
+        Vector3 movement = new Vector3(input.x, 0f, 0f) * moveSpeed * environmentSpeedMultiplier * Time.deltaTime;
         transform.position += movement;
     }
 
@@ -291,5 +292,10 @@ public class PlayerController : MonoBehaviour
             bottomLeft.x + halfWidth + screenPadding,
             topRight.x - halfWidth - screenPadding
         );
+    }
+
+    public void SetEnvironmentSpeedMultiplier(float multiplier)
+    {
+        environmentSpeedMultiplier = Mathf.Max(0f, multiplier);
     }
 }

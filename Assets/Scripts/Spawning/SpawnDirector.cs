@@ -16,22 +16,14 @@ public class SpawnDirector : MonoBehaviour
         public int NextWarningIndex;
     }
 
-    [Header("References")]
-    [SerializeField] private TrafficSpawner trafficSpawner;
-    [SerializeField] private RoadSignSpawner roadSignSpawner;
-    [SerializeField] private SpawnSafetyPlanner safetyPlanner;
-
-    [Header("Road Event Sources")]
-    [Tooltip("Add components that implement IRoadEventSource. SideRoadEventSource is the first one.")]
-    [SerializeField] private MonoBehaviour[] roadEventSources;
+    private TrafficSpawner trafficSpawner;
+    private RoadSignSpawner roadSignSpawner;
+    private SpawnSafetyPlanner safetyPlanner;
 
     [Header("Road Event Scheduling")]
     [Tooltip("Extra distance after the farthest warning before a newly planned event.")]
-    [Min(0f)]
-    [SerializeField] private float minEventLeadDistance = 50f;
-
-    [Min(0f)]
-    [SerializeField] private float maxEventLeadDistance = 150f;
+    private float minEventLeadDistance = 50f;
+    private float maxEventLeadDistance = 150f;
 
     private readonly EventSlot leftSlot = new EventSlot(RoadEventSide.Left);
     private readonly EventSlot rightSlot = new EventSlot(RoadEventSide.Right);
@@ -64,6 +56,30 @@ public class SpawnDirector : MonoBehaviour
             TryPlanNextEvent(fullRoadSlot);
     }
 
+    public void ApplyConfig(EnvironmentSpawnerConfig config)
+    {
+        if (config == null)
+            return;
+
+        minEventLeadDistance = Mathf.Max(0f, config.MinEventLeadDistance);
+        maxEventLeadDistance = Mathf.Max(minEventLeadDistance, config.MaxEventLeadDistance);
+
+        ReplanEvents();
+    }
+
+    private void ReplanEvents()
+    {
+        leftSlot.Plan = null;
+        rightSlot.Plan = null;
+        fullRoadSlot.Plan = null;
+
+        TryPlanNextEvent(leftSlot);
+        TryPlanNextEvent(rightSlot);
+
+        if (hasFullRoadSources)
+            TryPlanNextEvent(fullRoadSlot);
+    }
+
     private void Update()
     {
         if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
@@ -88,18 +104,15 @@ public class SpawnDirector : MonoBehaviour
         eventSources.Clear();
         hasFullRoadSources = false;
 
-        if (roadEventSources == null)
-            return;
+        MonoBehaviour[] sourceBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
 
-        foreach (MonoBehaviour sourceBehaviour in roadEventSources)
+        foreach (MonoBehaviour sourceBehaviour in sourceBehaviours)
         {
             if (sourceBehaviour is IRoadEventSource source)
             {
                 eventSources.Add(source);
                 hasFullRoadSources |= source.SupportsSide(RoadEventSide.FullRoad);
             }
-            else if (sourceBehaviour != null)
-                Debug.LogWarning($"SpawnDirector: {sourceBehaviour.name} does not implement IRoadEventSource.");
         }
     }
 

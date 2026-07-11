@@ -3,29 +3,25 @@ using UnityEngine;
 
 public class TrafficSpawner : MonoBehaviour, ISpawnRequestSource<TrafficSpawnRequest>, ISpawnExecutor<TrafficSpawnRequest>
 {
-    [System.Serializable]
-    private class TrafficSpawnEntry
-    {
-        public GameObject prefab;
+    private LaneSystem laneSystem;
 
-        [Min(0f)]
-        public float spawnWeight = 1f;
-    }
-
-    [Header("References")]
-    [SerializeField] private LaneSystem laneSystem;
-
-    [Header("Traffic")]
-    [SerializeField] private TrafficSpawnEntry[] trafficPrefabs;
-
-    [Header("Spawning")]
-    [SerializeField] private float spawnInterval = 1.1f;
+    private EnvironmentSpawnerConfig.TrafficEntry[] trafficPrefabs;
+    private float spawnInterval = 1.1f;
 
     public float SpawnInterval => spawnInterval;
 
     private void Awake()
     {
         laneSystem ??= FindAnyObjectByType<LaneSystem>();
+    }
+
+    public void ApplyConfig(EnvironmentSpawnerConfig config)
+    {
+        if (config == null)
+            return;
+
+        trafficPrefabs = config.TrafficPrefabs;
+        spawnInterval = Mathf.Max(0.01f, config.TrafficSpawnInterval);
     }
 
     public List<TrafficSpawnRequest> BuildSpawnRequests(float spawnTime)
@@ -72,7 +68,10 @@ public class TrafficSpawner : MonoBehaviour, ISpawnRequestSource<TrafficSpawnReq
     {
         float totalWeight = 0f;
 
-        foreach (TrafficSpawnEntry entry in trafficPrefabs)
+        if (trafficPrefabs == null)
+            return null;
+
+        foreach (EnvironmentSpawnerConfig.TrafficEntry entry in trafficPrefabs)
         {
             if (entry == null || entry.prefab == null)
                 continue;
@@ -89,7 +88,7 @@ public class TrafficSpawner : MonoBehaviour, ISpawnRequestSource<TrafficSpawnReq
         float randomValue = Random.Range(0f, totalWeight);
         float currentWeight = 0f;
 
-        foreach (TrafficSpawnEntry entry in trafficPrefabs)
+        foreach (EnvironmentSpawnerConfig.TrafficEntry entry in trafficPrefabs)
         {
             if (entry == null || entry.prefab == null)
                 continue;

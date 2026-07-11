@@ -2,17 +2,26 @@ using UnityEngine;
 
 public class RoadSignSpawner : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private LaneSystem laneSystem;
+    private LaneSystem laneSystem;
 
     [Header("Placement")]
-    [SerializeField] private float spawnYExtraOffset = 1f;
-    [SerializeField] private float despawnYExtraOffset = 1f;
-    [SerializeField] private float horizontalOffsetFromSideCenter;
+    private float spawnYExtraOffset = 1f;
+    private float despawnYExtraOffset = 1f;
+    private float horizontalOffsetFromSideCenter;
 
     private void Awake()
     {
         laneSystem ??= FindAnyObjectByType<LaneSystem>();
+    }
+
+    public void ApplyConfig(EnvironmentSpawnerConfig config)
+    {
+        if (config == null)
+            return;
+
+        spawnYExtraOffset = Mathf.Max(0f, config.RoadSignSpawnYExtraOffset);
+        despawnYExtraOffset = Mathf.Max(0f, config.RoadSignDespawnYExtraOffset);
+        horizontalOffsetFromSideCenter = config.RoadSignHorizontalOffsetFromSideCenter;
     }
 
     public bool TrySpawn(RoadSign prefab, SideRoadDirection direction)

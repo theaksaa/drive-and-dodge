@@ -39,18 +39,11 @@ public class SideRoadEventSource : MonoBehaviour, IRoadEventSource
         }
     }
 
-    [Header("References")]
-    [SerializeField] private SideRoadSpawner sideRoadSpawner;
-    [SerializeField] private SpawnSafetyPlanner safetyPlanner;
-    [SerializeField] private PlayerLaneTracker playerLaneTracker;
-
-    [Header("Event Selection")]
-    [Min(0f)]
-    [SerializeField] private float spawnWeight = 1f;
-
-    [Header("Side Road Event Profiles")]
-    [Tooltip("Each side-road type owns its warning-sign sequence.")]
-    [SerializeField] private SideRoadEventProfile[] eventProfiles;
+    private SideRoadSpawner sideRoadSpawner;
+    private SpawnSafetyPlanner safetyPlanner;
+    private PlayerLaneTracker playerLaneTracker;
+    private float spawnWeight = 1f;
+    private SideRoadEventProfile[] eventProfiles;
 
     public float SpawnWeight => spawnWeight;
 
@@ -60,6 +53,16 @@ public class SideRoadEventSource : MonoBehaviour, IRoadEventSource
         sideRoadSpawner ??= FindAnyObjectByType<SideRoadSpawner>();
         safetyPlanner ??= FindAnyObjectByType<SpawnSafetyPlanner>();
         playerLaneTracker ??= FindAnyObjectByType<PlayerLaneTracker>();
+
+    }
+
+    public void ApplyConfig(EnvironmentSpawnerConfig config)
+    {
+        if (config == null)
+            return;
+
+        spawnWeight = Mathf.Max(0f, config.SideRoadEventSpawnWeight);
+        eventProfiles = config.SideRoadEventProfiles;
 
         if (eventProfiles == null)
             return;

@@ -67,6 +67,13 @@ public class SpawnDirector : MonoBehaviour
         ReplanEvents();
     }
 
+    public void ResetRuntimeState()
+    {
+        trafficTimer = 0f;
+        distanceTravelled = 0f;
+        ReplanEvents();
+    }
+
     private void ReplanEvents()
     {
         leftSlot.Plan = null;
@@ -104,7 +111,7 @@ public class SpawnDirector : MonoBehaviour
         eventSources.Clear();
         hasFullRoadSources = false;
 
-        MonoBehaviour[] sourceBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        MonoBehaviour[] sourceBehaviours = FindObjectsByType<MonoBehaviour>();
 
         foreach (MonoBehaviour sourceBehaviour in sourceBehaviours)
         {

@@ -148,10 +148,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a556d494b5593d44907cceaf625648c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoadSignSpawner
-  laneSystem: {fileID: 1390585778}
-  spawnYExtraOffset: 1
-  despawnYExtraOffset: 1
-  horizontalOffsetFromSideCenter: 0
 --- !u!4 &29439300
 Transform:
   m_ObjectHideFlags: 0
@@ -1643,31 +1639,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0ab2c6d9c20f5943832581777a6d1f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SideRoadSpawner
-  laneSystem: {fileID: 1390585778}
-  sideRoadPrefab: {fileID: 3084955412098501969, guid: 90e5484710ddb30488551e1054479198, type: 3}
-  sideRoadVariants:
-  - sideRoadType: 0
-    prefabOverride: {fileID: 3084955412098501969, guid: 90e5484710ddb30488551e1054479198, type: 3}
-    spawnWeight: 1
-  - sideRoadType: 1
-    prefabOverride: {fileID: 3084955412098501969, guid: 7f56ed6f7f6a4973a5b92b6c39d49f5f, type: 3}
-    spawnWeight: 1
-  - sideRoadType: 2
-    prefabOverride: {fileID: 3084955412098501969, guid: 3085949b4fa24b65b6cf2440ccbcfdca, type: 3}
-    spawnWeight: 1
-  - sideRoadType: 3
-    prefabOverride: {fileID: 3084955412098501969, guid: c1dc1255f59444c4948c217967477f09, type: 3}
-    spawnWeight: 1
-  - sideRoadType: 4
-    prefabOverride: {fileID: 3084955412098501969, guid: 3afec9c0ff154788bb0bb13f012bb961, type: 3}
-    spawnWeight: 1
-  minSpawnInterval: 5
-  maxSpawnInterval: 9
-  spawnYExtraOffset: 1.5
-  despawnYExtraOffset: 1.5
-  preventMultipleVisibleSideRoads: 1
-  sideRoadHeight: 2.5
-  triggerOverlapIntoMainRoad: 0.5
 --- !u!114 &1050439750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1680,76 +1651,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 241394384e821894bb233aeb0129768e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SideRoadEventSource
-  sideRoadSpawner: {fileID: 1050439749}
-  safetyPlanner: {fileID: 1146173216}
-  playerLaneTracker: {fileID: 560615493}
-  spawnWeight: 1
-  eventProfiles:
-  - sideRoadType: 0
-    warningProfile:
-      requireSigns: 1
-      warnings:
-      - distanceBeforeEvent: 500
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 300
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 100
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-  - sideRoadType: 1
-    warningProfile:
-      requireSigns: 1
-      warnings:
-      - distanceBeforeEvent: 500
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 300
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 100
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-  - sideRoadType: 2
-    warningProfile:
-      requireSigns: 1
-      warnings:
-      - distanceBeforeEvent: 500
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 300
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 100
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-  - sideRoadType: 3
-    warningProfile:
-      requireSigns: 1
-      warnings:
-      - distanceBeforeEvent: 500
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 300
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 100
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-  - sideRoadType: 4
-    warningProfile:
-      requireSigns: 1
-      warnings:
-      - distanceBeforeEvent: 500
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 300
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
-      - distanceBeforeEvent: 100
-        prefab: {fileID: 262577129616363851, guid: 098c2a70447a2e14c8e348f0ac10a9de, type: 3}
-        placement: 0
 --- !u!1 &1089537145
 GameObject:
   m_ObjectHideFlags: 0
@@ -1852,13 +1753,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4971ad76222b0f9468aa312b15da0e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnDirector
-  trafficSpawner: {fileID: 1246977948}
-  roadSignSpawner: {fileID: 29439299}
-  safetyPlanner: {fileID: 1146173216}
-  roadEventSources:
-  - {fileID: 1050439750}
-  minEventLeadDistance: 50
-  maxEventLeadDistance: 150
 --- !u!4 &1146173218
 Transform:
   m_ObjectHideFlags: 0
@@ -1903,15 +1797,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db9ce823822bd0a4796f2d4b2351320b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrafficSpawner
-  laneSystem: {fileID: 1390585778}
-  trafficPrefabs:
-  - prefab: {fileID: 3939303659938814717, guid: bbef8c5f8180e7340858dd355add14c0, type: 3}
-    spawnWeight: 70
-  - prefab: {fileID: 3939303659938814717, guid: 8459d7028794427479414af61ce8b2f4, type: 3}
-    spawnWeight: 20
-  - prefab: {fileID: 3939303659938814717, guid: cc81c7005f4453f4fafb6f40de333cdb, type: 3}
-    spawnWeight: 10
-  spawnInterval: 0.6
 --- !u!4 &1246977949
 Transform:
   m_ObjectHideFlags: 0

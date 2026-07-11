@@ -95,6 +95,12 @@ public class SpawnReservationMap : MonoBehaviour
         });
     }
 
+    public void ClearAllReservations()
+    {
+        laneReservations.Clear();
+        sideRoadReservations.Clear();
+    }
+
     private static bool IntervalsOverlap(float startA, float endA, float startB, float endB)
     {
         return startA <= endB && endA >= startB;

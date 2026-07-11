@@ -57,8 +57,10 @@ public class EnvironmentManager : MonoBehaviour
 
     public void SwitchEnvironment(EnvironmentDefinition environment)
     {
-        if (environment == null || environment == currentEnvironment)
+        if (environment == null)
             return;
+
+        ResetDynamicWorldState();
 
         LaneSystem laneSystem = FindAnyObjectByType<LaneSystem>();
         laneSystem?.ApplyEnvironment(environment);
@@ -73,8 +75,13 @@ public class EnvironmentManager : MonoBehaviour
 
         ApplySpawnerConfig(environment.SpawnerConfig);
 
+        playerController?.ResetToEnvironmentStart();
+
         CameraLaneFitter cameraFitter = FindAnyObjectByType<CameraLaneFitter>();
         cameraFitter?.FitCameraToLanes();
+
+        FindAnyObjectByType<SpawnReservationMap>()?.ClearAllReservations();
+        FindAnyObjectByType<SpawnDirector>()?.ResetRuntimeState();
 
         ReplaceEnvironmentVisual(environment.EnvironmentPrefab);
         currentEnvironment = environment;
@@ -95,11 +102,29 @@ public class EnvironmentManager : MonoBehaviour
         FindAnyObjectByType<SideRoadSpawner>()?.ApplyConfig(config);
         FindAnyObjectByType<RoadSignSpawner>()?.ApplyConfig(config);
 
-        SideRoadEventSource[] eventSources = FindObjectsByType<SideRoadEventSource>(FindObjectsSortMode.None);
+        SideRoadEventSource[] eventSources = FindObjectsByType<SideRoadEventSource>();
         foreach (SideRoadEventSource eventSource in eventSources)
             eventSource.ApplyConfig(config);
 
         FindAnyObjectByType<SpawnDirector>()?.ApplyConfig(config);
+    }
+
+    private static void ResetDynamicWorldState()
+    {
+        DestroyAllActive<TrafficVehicle>();
+        DestroyAllActive<RoadSign>();
+        DestroyAllActive<SideRoad>();
+    }
+
+    private static void DestroyAllActive<T>() where T : MonoBehaviour
+    {
+        T[] activeObjects = FindObjectsByType<T>();
+
+        foreach (T activeObject in activeObjects)
+        {
+            if (activeObject != null)
+                Destroy(activeObject.gameObject);
+        }
     }
 
     private void ReplaceEnvironmentVisual(GameObject visualPrefab)

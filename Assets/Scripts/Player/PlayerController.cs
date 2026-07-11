@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour
     private bool isDragging;
     private Vector3 dragTargetPosition;
 
+    private Vector3 initialPosition;
     private float lockedY;
     private float environmentSpeedMultiplier = 1f;
 
@@ -44,6 +45,7 @@ public class PlayerController : MonoBehaviour
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         playerCollider = GetComponentInChildren<Collider2D>();
 
+        initialPosition = transform.position;
         lockedY = transform.position.y;
         dragTargetPosition = transform.position;
 
@@ -297,5 +299,20 @@ public class PlayerController : MonoBehaviour
     public void SetEnvironmentSpeedMultiplier(float multiplier)
     {
         environmentSpeedMultiplier = Mathf.Max(0f, multiplier);
+    }
+
+    public void ResetToEnvironmentStart()
+    {
+        float targetX = initialPosition.x;
+
+        if (laneSystem != null)
+            targetX = (laneSystem.RoadLeftX + laneSystem.RoadRightX) * 0.5f;
+
+        lockedY = initialPosition.y;
+        transform.position = new Vector3(targetX, lockedY, initialPosition.z);
+        dragTargetPosition = transform.position;
+        isDragging = false;
+
+        ClampToMovementBounds();
     }
 }

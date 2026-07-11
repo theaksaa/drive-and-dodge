@@ -15,10 +15,24 @@ MonoBehaviour:
   trafficPrefabs:
   - prefab: {fileID: 3939303659938814717, guid: bbef8c5f8180e7340858dd355add14c0, type: 3}
     spawnWeight: 70
+  - prefab: {fileID: 3939303659938814717, guid: e2245981e3a65af428a427605443d5ce, type: 3}
+    spawnWeight: 70
+  - prefab: {fileID: 3939303659938814717, guid: 83b8180503af84b479a685a3ef481508, type: 3}
+    spawnWeight: 70
+  - prefab: {fileID: 3939303659938814717, guid: 52b87b375643b394f844b46349801cd4, type: 3}
+    spawnWeight: 70
+  - prefab: {fileID: 3939303659938814717, guid: d3156bd3fdc72df4f95928d9300af28d, type: 3}
+    spawnWeight: 20
+  - prefab: {fileID: 3939303659938814717, guid: b1012c706579d5c4094db5b8e3cff112, type: 3}
+    spawnWeight: 20
   - prefab: {fileID: 3939303659938814717, guid: 8459d7028794427479414af61ce8b2f4, type: 3}
     spawnWeight: 20
-  - prefab: {fileID: 3939303659938814717, guid: cc81c7005f4453f4fafb6f40de333cdb, type: 3}
-    spawnWeight: 10
+  - prefab: {fileID: 3939303659938814717, guid: 4af6272dd600c7b43872c3af62d4420a, type: 3}
+    spawnWeight: 20
+  - prefab: {fileID: 3939303659938814717, guid: 902e496b8844d8d42ab85cb71836a659, type: 3}
+    spawnWeight: 40
+  - prefab: {fileID: 3939303659938814717, guid: 987b1bcbb79e0724e8cd6e5ecad13df4, type: 3}
+    spawnWeight: 15
   trafficSpawnInterval: 0.6
   sideRoadPrefab: {fileID: 3084955412098501969, guid: 90e5484710ddb30488551e1054479198, type: 3}
   sideRoadVariants:

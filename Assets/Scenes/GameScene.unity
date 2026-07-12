@@ -555,7 +555,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab10f2aa9dcf87b41bc9662c3d51b8de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnvironmentManager
-  startingEnvironment: {fileID: 11400000, guid: f31c80e75a5eb7f439f17bace353be35, type: 2}
+  startingEnvironment: {fileID: 11400000, guid: 81af80f4ec89ab2489a4e903003a2679, type: 2}
 --- !u!4 &281430410
 Transform:
   m_ObjectHideFlags: 0

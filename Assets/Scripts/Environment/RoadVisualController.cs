@@ -128,7 +128,8 @@ public class RoadVisualController : MonoBehaviour
             roadCenterX,
             laneSystem.RoadWidth,
             settings.SegmentHeight,
-            settings.SortingOrder);
+            settings.SortingOrder,
+            Vector3.one);
 
         float leftAvailableWidth = Mathf.Max(0f, laneSystem.RoadLeftX - visibleLeftX);
         float leftEdgeWidth = Mathf.Min(settings.LeftEdgeWidth, leftAvailableWidth);
@@ -136,32 +137,31 @@ public class RoadVisualController : MonoBehaviour
 
         if (leftEdgeWidth > 0f)
         {
-            float leftEdgeCenterX = laneSystem.RoadLeftX - leftEdgeWidth * 0.5f;
-            GameObject leftEdge = CreateSingleSpriteStrip(
+            CreateSingleSpriteStrip(
                 "LeftEdge",
                 segmentRoot.transform,
-                settings.LeftEdgeSprite,
+                settings.GetRandomLeftEdgeSprite(),
                 settings.EdgeColor,
-                leftEdgeCenterX,
-                leftEdgeWidth,
+                laneSystem.RoadLeftX,
                 settings.SegmentHeight,
-                settings.SortingOrder - 1);
-            leftEdge.transform.localScale = settings.LeftEdgeScale;
+                settings.SortingOrder - 1,
+                settings.LeftEdgeScale,
+                alignToLeftSide: true);
         }
 
         if (leftOutsideWidth > 0f)
         {
             float leftOutsideCenterX = visibleLeftX + leftOutsideWidth * 0.5f;
-            GameObject leftOutside = CreateStrip(
+            CreateStrip(
                 "LeftOutside",
                 segmentRoot.transform,
-                settings.LeftOutsideSprite,
+                settings.GetRandomLeftOutsideSprite(),
                 settings.OutsideColor,
                 leftOutsideCenterX,
                 leftOutsideWidth,
                 settings.SegmentHeight,
-                settings.SortingOrder - 2);
-            leftOutside.transform.localScale = settings.LeftOutsideScale;
+                settings.SortingOrder - 2,
+                settings.LeftOutsideScale);
         }
 
         float rightAvailableWidth = Mathf.Max(0f, visibleRightX - laneSystem.RoadRightX);
@@ -170,47 +170,46 @@ public class RoadVisualController : MonoBehaviour
 
         if (rightEdgeWidth > 0f)
         {
-            float rightEdgeCenterX = laneSystem.RoadRightX + rightEdgeWidth * 0.5f;
-            GameObject rightEdge = CreateSingleSpriteStrip(
+            CreateSingleSpriteStrip(
                 "RightEdge",
                 segmentRoot.transform,
-                settings.RightEdgeSprite,
+                settings.GetRandomRightEdgeSprite(),
                 settings.EdgeColor,
-                rightEdgeCenterX,
-                rightEdgeWidth,
+                laneSystem.RoadRightX,
                 settings.SegmentHeight,
-                settings.SortingOrder - 1);
-            rightEdge.transform.localScale = settings.RightEdgeScale;
+                settings.SortingOrder - 1,
+                settings.RightEdgeScale,
+                alignToLeftSide: false);
         }
 
         if (rightOutsideWidth > 0f)
         {
             float rightOutsideCenterX = laneSystem.RoadRightX + rightEdgeWidth + rightOutsideWidth * 0.5f;
-            GameObject rightOutside = CreateStrip(
+            CreateStrip(
                 "RightOutside",
                 segmentRoot.transform,
-                settings.RightOutsideSprite,
+                settings.GetRandomRightOutsideSprite(),
                 settings.OutsideColor,
                 rightOutsideCenterX,
                 rightOutsideWidth,
                 settings.SegmentHeight,
-                settings.SortingOrder - 2);
-            rightOutside.transform.localScale = settings.RightOutsideScale;
+                settings.SortingOrder - 2,
+                settings.RightOutsideScale);
         }
 
         for (int laneIndex = 1; laneIndex < laneSystem.LaneCount; laneIndex++)
         {
             float laneBoundaryX = laneSystem.GetLaneLeftX(laneIndex);
-            GameObject laneDivider = CreateStrip(
+            CreateStrip(
                 $"LaneDivider_{laneIndex}",
                 segmentRoot.transform,
-                settings.LaneDividerSprite,
+                settings.GetRandomLaneDividerSprite(),
                 settings.LaneDividerColor,
                 laneBoundaryX,
                 settings.LaneDividerWidth,
                 settings.SegmentHeight,
-                settings.SortingOrder + 1);
-            laneDivider.transform.localScale = settings.LaneDividerScale;
+                settings.SortingOrder + 1,
+                settings.LaneDividerScale);
         }
 
         return new Segment
@@ -228,7 +227,8 @@ public class RoadVisualController : MonoBehaviour
         float centerX,
         float width,
         float height,
-        int sortingOrder)
+        int sortingOrder,
+        Vector3 scale)
     {
         GameObject strip = new GameObject(objectName);
         strip.transform.SetParent(parent, false);
@@ -239,7 +239,12 @@ public class RoadVisualController : MonoBehaviour
         renderer.color = color;
         renderer.sortingOrder = sortingOrder;
         renderer.drawMode = SpriteDrawMode.Tiled;
-        renderer.size = new Vector2(Mathf.Max(0.01f, width), Mathf.Max(0.01f, height));
+        Vector3 safeScale = GetSafeScale(scale);
+        Vector3 alignedScale = GetVerticallyTiledScale(renderer.sprite, height, safeScale);
+        renderer.size = new Vector2(
+            Mathf.Max(0.01f, width),
+            GetWholeTileLocalHeight(renderer.sprite, height, safeScale.y));
+        strip.transform.localScale = alignedScale;
 
         return strip;
     }
@@ -249,31 +254,57 @@ public class RoadVisualController : MonoBehaviour
         Transform parent,
         Sprite sprite,
         Color color,
-        float centerX,
-        float width,
+        float roadEdgeX,
         float height,
-        int sortingOrder)
+        int sortingOrder,
+        Vector3 scale,
+        bool alignToLeftSide)
     {
         GameObject strip = new GameObject(objectName);
         strip.transform.SetParent(parent, false);
-        strip.transform.localPosition = new Vector3(centerX, 0f, 0f);
 
         SpriteRenderer renderer = strip.AddComponent<SpriteRenderer>();
         renderer.sprite = sprite != null ? sprite : GetFallbackSprite();
         renderer.color = color;
         renderer.sortingOrder = sortingOrder;
         renderer.drawMode = SpriteDrawMode.Tiled;
-
-        Vector2 spriteSize = renderer.sprite.bounds.size;
-        float safeSpriteWidth = Mathf.Max(0.01f, spriteSize.x);
-        renderer.size = new Vector2(safeSpriteWidth, Mathf.Max(0.01f, height));
-
-        strip.transform.localScale = new Vector3(
-            Mathf.Max(0.01f, width / safeSpriteWidth),
-            1f,
-            1f);
+        Vector3 safeScale = GetSafeScale(scale);
+        Vector3 alignedScale = GetVerticallyTiledScale(renderer.sprite, height, safeScale);
+        float spriteWidth = Mathf.Max(0.01f, renderer.sprite.bounds.size.x);
+        renderer.size = new Vector2(
+            spriteWidth,
+            GetWholeTileLocalHeight(renderer.sprite, height, safeScale.y));
+        strip.transform.localScale = alignedScale;
+        float halfRenderedWidth = spriteWidth * alignedScale.x * 0.5f;
+        float centerX = alignToLeftSide
+            ? roadEdgeX - halfRenderedWidth
+            : roadEdgeX + halfRenderedWidth;
+        strip.transform.localPosition = new Vector3(centerX, 0f, 0f);
 
         return strip;
+    }
+
+    private static Vector3 GetSafeScale(Vector3 scale)
+    {
+        return new Vector3(
+            Mathf.Max(0.01f, Mathf.Abs(scale.x)),
+            Mathf.Max(0.01f, Mathf.Abs(scale.y)),
+            Mathf.Max(0.01f, Mathf.Abs(scale.z)));
+    }
+
+    private static float GetWholeTileLocalHeight(Sprite sprite, float desiredWorldHeight, float preferredScaleY)
+    {
+        float tileLocalHeight = Mathf.Max(0.01f, sprite.bounds.size.y);
+        float safeScaleY = Mathf.Max(0.01f, Mathf.Abs(preferredScaleY));
+        int tileCount = Mathf.Max(1, Mathf.RoundToInt(desiredWorldHeight / (tileLocalHeight * safeScaleY)));
+        return tileLocalHeight * tileCount;
+    }
+
+    private static Vector3 GetVerticallyTiledScale(Sprite sprite, float desiredWorldHeight, Vector3 preferredScale)
+    {
+        float wholeTileLocalHeight = GetWholeTileLocalHeight(sprite, desiredWorldHeight, preferredScale.y);
+        float adjustedScaleY = Mathf.Max(0.01f, desiredWorldHeight / wholeTileLocalHeight);
+        return new Vector3(preferredScale.x, adjustedScaleY, preferredScale.z);
     }
 
     private bool HasVisualState()

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(fileName = "Environment", menuName = "Drive And Dodge/Environment")]
 public class EnvironmentDefinition : ScriptableObject
@@ -6,19 +7,44 @@ public class EnvironmentDefinition : ScriptableObject
     [System.Serializable]
     public class RoadVisualSettings
     {
+        [System.Serializable]
+        public class WeightedSpriteVariant
+        {
+            [SerializeField] private Sprite sprite;
+            [Min(0f)] [SerializeField] private float weight = 1f;
+
+            public Sprite Sprite => sprite;
+            public float Weight => weight;
+        }
+
         [Header("Sprites")]
         [Tooltip("Optional road sprite. If empty, a solid color strip is used.")]
         [SerializeField] private Sprite roadSurfaceSprite;
         [Tooltip("Optional left edge sprite near the road border.")]
         [SerializeField] private Sprite leftEdgeSprite;
+        [Min(0f)] [SerializeField] private float leftEdgeSpriteWeight = 1f;
+        [Tooltip("Optional extra left edge sprites that can appear sometimes.")]
+        [SerializeField] private List<WeightedSpriteVariant> leftEdgeSpriteVariants = new List<WeightedSpriteVariant>();
         [Tooltip("Optional right edge sprite near the road border.")]
         [SerializeField] private Sprite rightEdgeSprite;
+        [Min(0f)] [SerializeField] private float rightEdgeSpriteWeight = 1f;
+        [Tooltip("Optional extra right edge sprites that can appear sometimes.")]
+        [SerializeField] private List<WeightedSpriteVariant> rightEdgeSpriteVariants = new List<WeightedSpriteVariant>();
         [Tooltip("Optional left outside sprite filling the area beyond the edge strip.")]
         [SerializeField] private Sprite leftOutsideSprite;
+        [Min(0f)] [SerializeField] private float leftOutsideSpriteWeight = 1f;
+        [Tooltip("Optional extra left outside sprites that can appear sometimes.")]
+        [SerializeField] private List<WeightedSpriteVariant> leftOutsideSpriteVariants = new List<WeightedSpriteVariant>();
         [Tooltip("Optional right outside sprite filling the area beyond the edge strip.")]
         [SerializeField] private Sprite rightOutsideSprite;
+        [Min(0f)] [SerializeField] private float rightOutsideSpriteWeight = 1f;
+        [Tooltip("Optional extra right outside sprites that can appear sometimes.")]
+        [SerializeField] private List<WeightedSpriteVariant> rightOutsideSpriteVariants = new List<WeightedSpriteVariant>();
         [Tooltip("Sprite used for lane dividers between lanes.")]
         [SerializeField] private Sprite laneDividerSprite;
+        [Min(0f)] [SerializeField] private float laneDividerSpriteWeight = 1f;
+        [Tooltip("Optional extra lane divider sprites that can appear sometimes.")]
+        [SerializeField] private List<WeightedSpriteVariant> laneDividerSpriteVariants = new List<WeightedSpriteVariant>();
 
         [Header("Colors")]
         [SerializeField] private Color roadSurfaceColor = new Color(0.16f, 0.16f, 0.18f, 1f);
@@ -47,6 +73,16 @@ public class EnvironmentDefinition : ScriptableObject
         public Sprite LeftOutsideSprite => leftOutsideSprite;
         public Sprite RightOutsideSprite => rightOutsideSprite;
         public Sprite LaneDividerSprite => laneDividerSprite;
+        public float LeftEdgeSpriteWeight => leftEdgeSpriteWeight;
+        public float RightEdgeSpriteWeight => rightEdgeSpriteWeight;
+        public float LeftOutsideSpriteWeight => leftOutsideSpriteWeight;
+        public float RightOutsideSpriteWeight => rightOutsideSpriteWeight;
+        public float LaneDividerSpriteWeight => laneDividerSpriteWeight;
+        public IReadOnlyList<WeightedSpriteVariant> LeftEdgeSpriteVariants => leftEdgeSpriteVariants;
+        public IReadOnlyList<WeightedSpriteVariant> RightEdgeSpriteVariants => rightEdgeSpriteVariants;
+        public IReadOnlyList<WeightedSpriteVariant> LeftOutsideSpriteVariants => leftOutsideSpriteVariants;
+        public IReadOnlyList<WeightedSpriteVariant> RightOutsideSpriteVariants => rightOutsideSpriteVariants;
+        public IReadOnlyList<WeightedSpriteVariant> LaneDividerSpriteVariants => laneDividerSpriteVariants;
         public Color RoadSurfaceColor => roadSurfaceColor;
         public Color EdgeColor => edgeColor;
         public Color OutsideColor => outsideColor;
@@ -62,6 +98,82 @@ public class EnvironmentDefinition : ScriptableObject
         public Vector3 LeftOutsideScale => leftOutsideScale;
         public Vector3 RightOutsideScale => rightOutsideScale;
         public Vector3 LaneDividerScale => laneDividerScale;
+
+        public Sprite GetRandomLeftEdgeSprite()
+        {
+            return ChooseWeightedSprite(leftEdgeSprite, leftEdgeSpriteWeight, leftEdgeSpriteVariants);
+        }
+
+        public Sprite GetRandomRightEdgeSprite()
+        {
+            return ChooseWeightedSprite(rightEdgeSprite, rightEdgeSpriteWeight, rightEdgeSpriteVariants);
+        }
+
+        public Sprite GetRandomLeftOutsideSprite()
+        {
+            return ChooseWeightedSprite(leftOutsideSprite, leftOutsideSpriteWeight, leftOutsideSpriteVariants);
+        }
+
+        public Sprite GetRandomRightOutsideSprite()
+        {
+            return ChooseWeightedSprite(rightOutsideSprite, rightOutsideSpriteWeight, rightOutsideSpriteVariants);
+        }
+
+        public Sprite GetRandomLaneDividerSprite()
+        {
+            return ChooseWeightedSprite(laneDividerSprite, laneDividerSpriteWeight, laneDividerSpriteVariants);
+        }
+
+        private static Sprite ChooseWeightedSprite(
+            Sprite defaultSprite,
+            float defaultWeight,
+            List<WeightedSpriteVariant> variants)
+        {
+            float totalWeight = 0f;
+
+            if (defaultSprite != null && defaultWeight > 0f)
+                totalWeight += defaultWeight;
+
+            if (variants != null)
+            {
+                foreach (WeightedSpriteVariant variant in variants)
+                {
+                    if (variant == null || variant.Sprite == null || variant.Weight <= 0f)
+                        continue;
+
+                    totalWeight += variant.Weight;
+                }
+            }
+
+            if (totalWeight <= 0f)
+                return defaultSprite;
+
+            float roll = Random.value * totalWeight;
+
+            if (defaultSprite != null && defaultWeight > 0f)
+            {
+                if (roll < defaultWeight)
+                    return defaultSprite;
+
+                roll -= defaultWeight;
+            }
+
+            if (variants != null)
+            {
+                foreach (WeightedSpriteVariant variant in variants)
+                {
+                    if (variant == null || variant.Sprite == null || variant.Weight <= 0f)
+                        continue;
+
+                    if (roll < variant.Weight)
+                        return variant.Sprite;
+
+                    roll -= variant.Weight;
+                }
+            }
+
+            return defaultSprite;
+        }
     }
 
     [Header("Identity")]

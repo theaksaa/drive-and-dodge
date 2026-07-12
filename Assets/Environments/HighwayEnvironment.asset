@@ -14,6 +14,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnvironmentDefinition
   displayName: Highway
   environmentPrefab: {fileID: 0}
+  roadVisuals:
+    roadSurfaceSprite: {fileID: 0}
+    leftEdgeSprite: {fileID: 2870356585159790946, guid: 84d64334adeb2e7409d7d4d093ea3eca, type: 3}
+    rightEdgeSprite: {fileID: 7333201876917153591, guid: 4b69c6f9b3eed5f459025d3bc5026ef4, type: 3}
+    leftOutsideSprite: {fileID: 0}
+    rightOutsideSprite: {fileID: 0}
+    laneDividerSprite: {fileID: 8739605796743678407, guid: 912bcd9279e66c84293873677eedf22d, type: 3}
+    roadSurfaceColor: {r: 0.16, g: 0.16, b: 0.18, a: 1}
+    edgeColor: {r: 1, g: 1, b: 1, a: 1}
+    outsideColor: {r: 0.04049486, g: 0.6603774, b: 0.06440763, a: 1}
+    laneDividerColor: {r: 1, g: 1, b: 1, a: 1}
+    segmentHeight: 16
+    segmentCount: 3
+    laneDividerWidth: 0.18
+    leftEdgeWidth: 0.35
+    rightEdgeWidth: 0.35
+    sortingOrder: -20
+    leftEdgeScale: {x: 7, y: 7, z: 7}
+    rightEdgeScale: {x: 7, y: 7, z: 7}
+    leftOutsideScale: {x: 1, y: 1, z: 1}
+    rightOutsideScale: {x: 1, y: 1, z: 1}
+    laneDividerScale: {x: 4, y: 4, z: 4}
   laneCount: 4
   laneWidth: 1.6
   leftMargin: 0.5

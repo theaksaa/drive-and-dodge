@@ -26,11 +26,23 @@ public class EnvironmentManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
-            return;
+            // A replacement scene may awaken before the previous scene is fully
+            // unloaded. Transfer ownership across scenes instead of deleting the
+            // new manager and leaving Instance null after the old one is destroyed.
+            if (Instance.gameObject.scene.Equals(gameObject.scene))
+            {
+                Destroy(gameObject);
+                return;
+            }
         }
 
         Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void OnEnable()

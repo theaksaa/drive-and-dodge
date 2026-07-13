@@ -29,7 +29,7 @@ public class ComboSystem : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+        if (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped)
             return;
 
         UpdateCooldown();

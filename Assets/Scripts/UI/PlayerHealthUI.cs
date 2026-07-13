@@ -12,7 +12,7 @@ public class PlayerHealthUI : MonoBehaviour
     private void Awake()
     {
         if (playerHealth == null)
-            playerHealth = FindFirstObjectByType<PlayerHealth>();
+            playerHealth = FindAnyObjectByType<PlayerHealth>();
     }
 
     private void Update()

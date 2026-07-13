@@ -24,7 +24,7 @@ public class FuelSystem : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+        if (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped)
             return;
 
         if (!IsOutOfFuel)

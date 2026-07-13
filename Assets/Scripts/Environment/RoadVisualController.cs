@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-90)]
 public class RoadVisualController : MonoBehaviour
@@ -18,11 +19,39 @@ public class RoadVisualController : MonoBehaviour
     private LaneSystem laneSystem;
     private EnvironmentDefinition currentEnvironment;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void EnsureInstanceExists()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterForSceneLoads()
     {
-        if (FindAnyObjectByType<RoadVisualController>() == null)
-            new GameObject(nameof(RoadVisualController)).AddComponent<RoadVisualController>();
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void EnsureInitialInstanceExists()
+    {
+        EnsureInstanceExists(SceneManager.GetActiveScene());
+    }
+
+    private static void HandleSceneLoaded(Scene scene, LoadSceneMode loadMode)
+    {
+        EnsureInstanceExists(scene);
+    }
+
+    private static void EnsureInstanceExists(Scene targetScene)
+    {
+        RoadVisualController[] controllers = FindObjectsByType<RoadVisualController>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (RoadVisualController controller in controllers)
+        {
+            if (controller != null && controller.gameObject.scene.Equals(targetScene))
+                return;
+        }
+
+        GameObject controllerObject = new GameObject(nameof(RoadVisualController));
+        SceneManager.MoveGameObjectToScene(controllerObject, targetScene);
+        controllerObject.AddComponent<RoadVisualController>();
     }
 
     private void Awake()

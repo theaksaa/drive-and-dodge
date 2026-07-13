@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
 
@@ -76,7 +77,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+        if (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped)
             return;
 
         if (collisionPush != null && collisionPush.IsBounceActive)
@@ -148,6 +149,14 @@ public class PlayerController : MonoBehaviour
     {
         Touch touch = Touch.activeTouches[0];
 
+        if (IsPointerOverUi(touch))
+        {
+            if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                isDragging = false;
+
+            return;
+        }
+
         Vector2 screenPosition = touch.screenPosition;
         Vector3 worldPosition = GetWorldPositionFromScreen(screenPosition);
 
@@ -174,6 +183,14 @@ public class PlayerController : MonoBehaviour
     {
         if (Mouse.current == null)
             return;
+
+        if (IsPointerOverUi())
+        {
+            if (Mouse.current.leftButton.wasReleasedThisFrame)
+                isDragging = false;
+
+            return;
+        }
 
         Vector2 screenPosition = Mouse.current.position.ReadValue();
         Vector3 worldPosition = GetWorldPositionFromScreen(screenPosition);
@@ -232,6 +249,16 @@ public class PlayerController : MonoBehaviour
         worldPosition.z = transform.position.z;
 
         return worldPosition;
+    }
+
+    private static bool IsPointerOverUi()
+    {
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    }
+
+    private static bool IsPointerOverUi(Touch touch)
+    {
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.touchId);
     }
 
     private bool IsPointOnPlayer(Vector3 worldPosition)

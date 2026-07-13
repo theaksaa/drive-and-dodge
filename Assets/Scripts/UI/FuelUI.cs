@@ -12,7 +12,7 @@ public class FuelDisplay : MonoBehaviour
     private void Awake()
     {
         if (fuelSystem == null)
-            fuelSystem = FindFirstObjectByType<FuelSystem>();
+            fuelSystem = FindAnyObjectByType<FuelSystem>();
     }
 
     private void Update()

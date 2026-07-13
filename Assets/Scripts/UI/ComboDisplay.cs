@@ -13,7 +13,7 @@ public class ComboDisplay : MonoBehaviour
     private void Awake()
     {
         if (comboSystem == null)
-            comboSystem = FindFirstObjectByType<ComboSystem>();
+            comboSystem = FindAnyObjectByType<ComboSystem>();
     }
 
     private void Update()

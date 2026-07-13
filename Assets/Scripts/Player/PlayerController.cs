@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
     private Camera mainCamera;
     private SpriteRenderer spriteRenderer;
     private Collider2D playerCollider;
+    private PlayerCollisionPush collisionPush;
 
     private bool isDragging;
     private Vector3 dragTargetPosition;
@@ -44,6 +45,7 @@ public class PlayerController : MonoBehaviour
         laneSystem ??= FindAnyObjectByType<LaneSystem>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         playerCollider = GetComponentInChildren<Collider2D>();
+        collisionPush = GetComponent<PlayerCollisionPush>();
 
         initialPosition = transform.position;
         lockedY = transform.position.y;
@@ -77,7 +79,11 @@ public class PlayerController : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
             return;
 
-        if (movementMode == MovementMode.Joystick)
+        if (collisionPush != null && collisionPush.IsBounceActive)
+        {
+            collisionPush.ApplyBounceStep(transform);
+        }
+        else if (movementMode == MovementMode.Joystick)
         {
             MoveWithJoystick();
         }
@@ -85,7 +91,6 @@ public class PlayerController : MonoBehaviour
         {
             MoveWithDrag();
         }
-
         LockVerticalPosition();
         ClampToMovementBounds();
     }
@@ -314,5 +319,20 @@ public class PlayerController : MonoBehaviour
         isDragging = false;
 
         ClampToMovementBounds();
+    }
+
+    public void CancelDragForExternalMovement()
+    {
+        if (movementMode == MovementMode.Drag)
+        {
+            dragTargetPosition = transform.position;
+            isDragging = false;
+        }
+    }
+
+    public void SyncDragTargetToCurrentPosition()
+    {
+        if (movementMode == MovementMode.Drag)
+            dragTargetPosition = transform.position;
     }
 }

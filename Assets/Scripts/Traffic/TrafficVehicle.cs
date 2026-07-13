@@ -345,6 +345,30 @@ public class TrafficVehicle : MonoBehaviour
         return 0.5f;
     }
 
+    public bool TryGetCollisionPushDirection(float playerX, out float direction)
+    {
+        direction = 0f;
+
+        if (laneChangeInProgress)
+        {
+            float laneChangeDirection = Mathf.Sign(laneChangeTargetX - laneChangeStartX);
+
+            if (!Mathf.Approximately(laneChangeDirection, 0f))
+            {
+                direction = laneChangeDirection;
+                return true;
+            }
+        }
+
+        float relativeDirection = Mathf.Sign(playerX - transform.position.x);
+
+        if (Mathf.Approximately(relativeDirection, 0f))
+            return false;
+
+        direction = relativeDirection;
+        return true;
+    }
+
     private void DestroyIfOutsideScreen()
     {
         float bottomY;

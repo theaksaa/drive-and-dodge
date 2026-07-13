@@ -24,9 +24,21 @@ public class SideRoad : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private BoxCollider2D triggerCollider;
 
+    private SideRoadVisual sideRoadVisual;
+
     [Header("Environment Transition")]
     [Tooltip("Entering this side road switches to this environment. Leave empty for a normal side road.")]
     [SerializeField] private EnvironmentDefinition destinationEnvironment;
+
+    [Header("Visual Shape")]
+    [Tooltip("Vertical diagonal rise as a multiplier of the configured side-road height.")]
+    [Min(0.01f)] [SerializeField] private float visualRiseRatio = 0.75f;
+    [Tooltip("Road thickness as a multiplier of the configured side-road height.")]
+    [Min(0.01f)] [SerializeField] private float visualThicknessRatio = 0.55f;
+    [Tooltip("Maximum width of each edge band as a fraction of the road thickness.")]
+    [Range(0.01f, 0.49f)] [SerializeField] private float visualEdgeThicknessRatio = 0.20f;
+    [Tooltip("How many road-thickness units the branch extends beyond the outside screen edge.")]
+    [Min(0f)] [SerializeField] private float visualOuterExtensionMultiplier = 1f;
 
     private SideRoadDirection direction;
     private SideRoadType sideRoadType;
@@ -45,6 +57,16 @@ public class SideRoad : MonoBehaviour
 
         if (spriteRenderer == null)
             spriteRenderer = GetComponent<SpriteRenderer>();
+
+        sideRoadVisual = GetComponent<SideRoadVisual>();
+
+        if (sideRoadVisual == null)
+            sideRoadVisual = gameObject.AddComponent<SideRoadVisual>();
+
+        // The prefab SpriteRenderer was only a placeholder. The actual road is
+        // assembled from the active environment sprites during Setup.
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = false;
 
         triggerCollider.isTrigger = true;
     }
@@ -93,7 +115,7 @@ public class SideRoad : MonoBehaviour
         else
             VisibleRightSideRoadCount++;
 
-        transform.localScale = new Vector3(visualWidth, visualHeight, 1f);
+        transform.localScale = Vector3.one;
 
         if (triggerCollider == null)
             triggerCollider = GetComponent<BoxCollider2D>();
@@ -101,15 +123,26 @@ public class SideRoad : MonoBehaviour
         triggerCollider.isTrigger = true;
 
         float safeVisualWidth = Mathf.Max(visualWidth, 0.01f);
+        float safeVisualHeight = Mathf.Max(visualHeight, 0.01f);
+        triggerCollider.size = new Vector2(
+            safeVisualWidth + triggerOverlapIntoMainRoad,
+            safeVisualHeight);
 
-        float colliderWidthMultiplier = 1f + (triggerOverlapIntoMainRoad / safeVisualWidth);
-        triggerCollider.size = new Vector2(colliderWidthMultiplier, 1f);
-
-        float offsetX = triggerOverlapIntoMainRoad / (2f * safeVisualWidth);
+        float offsetX = triggerOverlapIntoMainRoad * 0.5f;
 
         triggerCollider.offset = direction == SideRoadDirection.Left
             ? new Vector2(offsetX, 0f)
             : new Vector2(-offsetX, 0f);
+
+        sideRoadVisual.Build(
+            direction,
+            safeVisualWidth,
+            safeVisualHeight,
+            triggerOverlapIntoMainRoad,
+            visualRiseRatio,
+            visualThicknessRatio,
+            visualEdgeThicknessRatio,
+            visualOuterExtensionMultiplier);
     }
 
     private void OnTriggerEnter2D(Collider2D other)

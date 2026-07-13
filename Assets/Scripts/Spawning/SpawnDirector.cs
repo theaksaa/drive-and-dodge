@@ -163,20 +163,25 @@ public class SpawnDirector : MonoBehaviour
 
     private bool TrySpawnWarning(RoadEventWarning warning, RoadEventSide eventSide)
     {
-        if (warning == null || warning.prefab == null)
+        if (warning == null)
+            return false;
+
+        RoadSign prefab = warning.GetPrefab(eventSide);
+
+        if (prefab == null)
             return false;
 
         switch (warning.placement)
         {
             case RoadSignPlacement.Left:
-                return roadSignSpawner.TrySpawn(warning.prefab, SideRoadDirection.Left);
+                return roadSignSpawner.TrySpawn(prefab, SideRoadDirection.Left);
 
             case RoadSignPlacement.Right:
-                return roadSignSpawner.TrySpawn(warning.prefab, SideRoadDirection.Right);
+                return roadSignSpawner.TrySpawn(prefab, SideRoadDirection.Right);
 
             case RoadSignPlacement.Both:
-                bool leftSpawned = roadSignSpawner.TrySpawn(warning.prefab, SideRoadDirection.Left);
-                bool rightSpawned = roadSignSpawner.TrySpawn(warning.prefab, SideRoadDirection.Right);
+                bool leftSpawned = roadSignSpawner.TrySpawn(prefab, SideRoadDirection.Left);
+                bool rightSpawned = roadSignSpawner.TrySpawn(prefab, SideRoadDirection.Right);
                 return leftSpawned && rightSpawned;
 
             case RoadSignPlacement.EventSide:
@@ -186,7 +191,7 @@ public class SpawnDirector : MonoBehaviour
                 SideRoadDirection direction = eventSide == RoadEventSide.Left
                     ? SideRoadDirection.Left
                     : SideRoadDirection.Right;
-                return roadSignSpawner.TrySpawn(warning.prefab, direction);
+                return roadSignSpawner.TrySpawn(prefab, direction);
 
             default:
                 return false;

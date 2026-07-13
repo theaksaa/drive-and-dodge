@@ -20,10 +20,40 @@ public class RoadEventWarning
 {
     [Min(0f)]
     public float distanceBeforeEvent = 100f;
+
+    [Tooltip("Prefab used for Left, Right and Both placement. For Event Side, this is used as a fallback when that side's prefab is not assigned.")]
     public RoadSign prefab;
+
     public RoadSignPlacement placement = RoadSignPlacement.EventSide;
 
-    public bool IsValid => prefab != null && distanceBeforeEvent >= 0f;
+    [Tooltip("Prefab used when placement is Event Side and the event is on the left.")]
+    public RoadSign leftEventSidePrefab;
+
+    [Tooltip("Prefab used when placement is Event Side and the event is on the right.")]
+    public RoadSign rightEventSidePrefab;
+
+    public RoadSign GetPrefab(RoadEventSide eventSide)
+    {
+        if (placement != RoadSignPlacement.EventSide)
+            return prefab;
+
+        switch (eventSide)
+        {
+            case RoadEventSide.Left:
+                return leftEventSidePrefab != null ? leftEventSidePrefab : prefab;
+
+            case RoadEventSide.Right:
+                return rightEventSidePrefab != null ? rightEventSidePrefab : prefab;
+
+            default:
+                return null;
+        }
+    }
+
+    public bool IsValidFor(RoadEventSide eventSide)
+    {
+        return distanceBeforeEvent >= 0f && GetPrefab(eventSide) != null;
+    }
 }
 
 [System.Serializable]
@@ -45,11 +75,7 @@ public class RoadEventWarningProfile
 
         foreach (RoadEventWarning warning in warnings)
         {
-            if (warning == null || !warning.IsValid)
-                return false;
-
-            if (eventSide == RoadEventSide.FullRoad &&
-                warning.placement == RoadSignPlacement.EventSide)
+            if (warning == null || !warning.IsValidFor(eventSide))
                 return false;
         }
 

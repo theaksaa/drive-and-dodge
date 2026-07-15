@@ -23,6 +23,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float screenPadding = 0.15f;
 
+    [Header("Movement Rotation")]
+    [SerializeField, Min(0f)] private float movementRotationAngle = 8f;
+    [SerializeField, Min(0f)] private float movementRotationSpeed = 120f;
+    [SerializeField, Min(0f)] private float movementRotationDeadZone = 0.1f;
+    [SerializeField, Min(0f)] private float movementRotationFullTiltSpeed = 5f;
+
     [Header("Drag Debug Movement")]
     [SerializeField] private bool onlyDragWhenTouchingPlayer = false;
     [SerializeField] private bool instantDrag = true;
@@ -37,6 +43,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 dragTargetPosition;
 
     private Vector3 initialPosition;
+    private Quaternion baseLocalRotation;
     private float lockedY;
     private float environmentSpeedMultiplier = 1f;
     private bool externalMovementActive;
@@ -50,6 +57,7 @@ public class PlayerController : MonoBehaviour
         collisionPush = GetComponent<PlayerCollisionPush>();
 
         initialPosition = transform.position;
+        baseLocalRotation = transform.localRotation;
         lockedY = transform.position.y;
         dragTargetPosition = transform.position;
 
@@ -82,7 +90,10 @@ public class PlayerController : MonoBehaviour
             (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped))
             return;
 
-        if (collisionPush != null && collisionPush.IsBounceActive)
+        float previousX = transform.position.x;
+        bool bounceWasActive = collisionPush != null && collisionPush.IsBounceActive;
+
+        if (bounceWasActive)
         {
             collisionPush.ApplyBounceStep(transform);
         }
@@ -96,6 +107,35 @@ public class PlayerController : MonoBehaviour
         }
         LockVerticalPosition();
         ClampToMovementBounds();
+
+        if (!bounceWasActive)
+            UpdateMovementRotation(transform.position.x - previousX);
+    }
+
+    private void UpdateMovementRotation(float horizontalMovement)
+    {
+        if (Mathf.Approximately(movementRotationAngle, 0f))
+        {
+            transform.localRotation = baseLocalRotation;
+            return;
+        }
+
+        float horizontalVelocity = horizontalMovement / Mathf.Max(Time.deltaTime, 0.0001f);
+        float horizontalSpeed = Mathf.Abs(horizontalVelocity);
+        float fullTiltSpeed = Mathf.Max(
+            movementRotationFullTiltSpeed,
+            movementRotationDeadZone + 0.0001f);
+        float tiltAmount = Mathf.InverseLerp(
+            movementRotationDeadZone,
+            fullTiltSpeed,
+            horizontalSpeed);
+        float targetAngle = -Mathf.Sign(horizontalVelocity) * movementRotationAngle * tiltAmount;
+        Quaternion targetRotation = baseLocalRotation * Quaternion.Euler(0f, 0f, targetAngle);
+
+        transform.localRotation = Quaternion.RotateTowards(
+            transform.localRotation,
+            targetRotation,
+            movementRotationSpeed * Time.deltaTime);
     }
 
     private void MoveWithJoystick()

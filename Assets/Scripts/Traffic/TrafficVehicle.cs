@@ -6,6 +6,12 @@ public class TrafficVehicle : MonoBehaviour
     [SerializeField] private float speedOffset = 0f;
     [SerializeField] private float minMoveSpeed = 3f;
 
+    [Header("Movement Rotation")]
+    [SerializeField, Min(0f)] private float movementRotationAngle = 8f;
+    [SerializeField, Min(0f)] private float movementRotationSpeed = 120f;
+    [SerializeField, Min(0f)] private float movementRotationDeadZone = 0.1f;
+    [SerializeField, Min(0f)] private float movementRotationFullTiltSpeed = 5f;
+
     [Header("Animation Speed")]
     [SerializeField] private float animationReferenceSpeed = 6f;
     [SerializeField] [Range(0.25f, 1f)] private float minimumAnimationDurationMultiplier = 0.55f;
@@ -38,6 +44,7 @@ public class TrafficVehicle : MonoBehaviour
     private LaneSystem laneSystem;
     private SpriteRenderer[] leftBlinkers;
     private SpriteRenderer[] rightBlinkers;
+    private Quaternion baseLocalRotation;
 
     private bool hasPlannedLaneChange;
     private int plannedTargetLaneIndex = -1;
@@ -62,6 +69,7 @@ public class TrafficVehicle : MonoBehaviour
     private void Awake()
     {
         mainCamera = Camera.main;
+        baseLocalRotation = transform.localRotation;
         leftBlinkers = GetBlinkers("Blinkers/Left");
         rightBlinkers = GetBlinkers("Blinkers/Right");
         SetBlinkersActive(false, false);
@@ -170,9 +178,37 @@ public class TrafficVehicle : MonoBehaviour
             return;
         }
 
+        float previousX = transform.position.x;
         UpdateLaneChange();
         MoveDown();
+        UpdateMovementRotation(transform.position.x - previousX);
         DestroyIfOutsideScreen();
+    }
+
+    private void UpdateMovementRotation(float horizontalMovement)
+    {
+        if (Mathf.Approximately(movementRotationAngle, 0f))
+        {
+            transform.localRotation = baseLocalRotation;
+            return;
+        }
+
+        float horizontalVelocity = horizontalMovement / Mathf.Max(Time.deltaTime, 0.0001f);
+        float horizontalSpeed = Mathf.Abs(horizontalVelocity);
+        float fullTiltSpeed = Mathf.Max(
+            movementRotationFullTiltSpeed,
+            movementRotationDeadZone + 0.0001f);
+        float tiltAmount = Mathf.InverseLerp(
+            movementRotationDeadZone,
+            fullTiltSpeed,
+            horizontalSpeed);
+        float targetAngle = -Mathf.Sign(horizontalVelocity) * movementRotationAngle * tiltAmount;
+        Quaternion targetRotation = baseLocalRotation * Quaternion.Euler(0f, 0f, targetAngle);
+
+        transform.localRotation = Quaternion.RotateTowards(
+            transform.localRotation,
+            targetRotation,
+            movementRotationSpeed * Time.deltaTime);
     }
 
     public void BeginHitReaction(float playerX)

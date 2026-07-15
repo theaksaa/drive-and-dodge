@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 [DefaultExecutionOrder(-100)]
 public class EnvironmentManager : MonoBehaviour
@@ -10,8 +12,18 @@ public class EnvironmentManager : MonoBehaviour
     [Header("Optional Starting Environment")]
     [SerializeField] private EnvironmentDefinition startingEnvironment;
 
+    [Header("Side Road Transition")]
+    [Min(0.05f)] [SerializeField] private float sideRoadDriveDuration = 0.65f;
+    [Min(0f)] [SerializeField] private float sideRoadDriveDistance = 0.75f;
+    [Min(0f)] [SerializeField] private float sideRoadDriveRise = 0.7f;
+    [Range(0f, 90f)] [SerializeField] private float sideRoadTurnAngle = 55f;
+    [Min(0.01f)] [SerializeField] private float fadeOutDuration = 0.3f;
+    [Min(0.01f)] [SerializeField] private float fadeInDuration = 0.35f;
+
     private EnvironmentDefinition currentEnvironment;
     private GameObject currentEnvironmentVisual;
+    private Image fadeImage;
+    private bool sideRoadTransitionInProgress;
 
     public EnvironmentDefinition CurrentEnvironment => currentEnvironment;
 
@@ -63,8 +75,169 @@ public class EnvironmentManager : MonoBehaviour
 
     private void HandleSideRoadEntered(SideRoad sideRoad)
     {
-        if (sideRoad != null && sideRoad.DestinationEnvironment != null)
-            SwitchEnvironment(sideRoad.DestinationEnvironment);
+        if (sideRoad == null || sideRoad.DestinationEnvironment == null ||
+            sideRoadTransitionInProgress)
+            return;
+
+        StartCoroutine(TransitionThroughSideRoad(sideRoad));
+    }
+
+    private IEnumerator TransitionThroughSideRoad(SideRoad sideRoad)
+    {
+        sideRoadTransitionInProgress = true;
+        EnvironmentDefinition destination = sideRoad.DestinationEnvironment;
+
+        PlayerController playerController = FindAnyObjectByType<PlayerController>();
+        Transform playerTransform = playerController != null ? playerController.transform : null;
+        Quaternion startingRotation = playerTransform != null
+            ? playerTransform.rotation
+            : Quaternion.identity;
+
+        playerController?.BeginExternalMovement();
+
+        if (playerTransform != null)
+            yield return AnimatePlayerIntoSideRoad(playerTransform, sideRoad, startingRotation);
+
+        EnsureFadeOverlay();
+        yield return FadeTo(1f, fadeOutDuration, playerTransform, sideRoad);
+
+        if (destination != null)
+            SwitchEnvironment(destination);
+
+        if (playerTransform != null)
+            playerTransform.rotation = startingRotation;
+
+        // Let destroyed world objects and the new environment visual settle while
+        // the screen is fully covered.
+        yield return null;
+        yield return FadeTo(0f, fadeInDuration);
+
+        playerController?.EndExternalMovement();
+        sideRoadTransitionInProgress = false;
+    }
+
+    private IEnumerator AnimatePlayerIntoSideRoad(
+        Transform playerTransform,
+        SideRoad sideRoad,
+        Quaternion startingRotation)
+    {
+        Vector3 startingPosition = playerTransform.position;
+        Vector3 startingSideRoadPosition = sideRoad.transform.position;
+        float direction = sideRoad.Direction == SideRoadDirection.Left ? -1f : 1f;
+        Vector3 targetPositionAtStart = new Vector3(
+            sideRoad.transform.position.x + direction * sideRoadDriveDistance,
+            startingPosition.y + sideRoadDriveRise,
+            startingPosition.z);
+        Quaternion targetRotation = startingRotation * Quaternion.Euler(
+            0f,
+            0f,
+            -direction * sideRoadTurnAngle);
+
+        float duration = Mathf.Max(0.05f, sideRoadDriveDuration);
+        float elapsed = 0f;
+        Vector3 sideRoadDisplacement = Vector3.zero;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+
+            if (sideRoad != null)
+            {
+                sideRoadDisplacement = sideRoad.transform.position - startingSideRoadPosition;
+            }
+            else if (GameManager.Instance != null)
+            {
+                sideRoadDisplacement += Vector3.down *
+                                        GameManager.Instance.CurrentGameSpeed *
+                                        Time.deltaTime;
+            }
+
+            playerTransform.position = Vector3.Lerp(
+                startingPosition + sideRoadDisplacement,
+                targetPositionAtStart + sideRoadDisplacement,
+                easedProgress);
+            playerTransform.rotation = Quaternion.Slerp(
+                startingRotation,
+                targetRotation,
+                easedProgress);
+
+            yield return null;
+        }
+    }
+
+    private void EnsureFadeOverlay()
+    {
+        if (fadeImage != null)
+            return;
+
+        GameObject canvasObject = new GameObject(
+            "EnvironmentTransitionFade",
+            typeof(Canvas),
+            typeof(CanvasScaler));
+        canvasObject.transform.SetParent(transform, false);
+
+        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = short.MaxValue;
+
+        GameObject imageObject = new GameObject("Fade", typeof(RectTransform), typeof(Image));
+        imageObject.transform.SetParent(canvasObject.transform, false);
+
+        RectTransform rectTransform = imageObject.GetComponent<RectTransform>();
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.offsetMin = Vector2.zero;
+        rectTransform.offsetMax = Vector2.zero;
+
+        fadeImage = imageObject.GetComponent<Image>();
+        fadeImage.color = new Color(0f, 0f, 0f, 0f);
+        fadeImage.raycastTarget = false;
+    }
+
+    private IEnumerator FadeTo(
+        float targetAlpha,
+        float duration,
+        Transform movingObject = null,
+        SideRoad movingSideRoad = null)
+    {
+        if (fadeImage == null)
+            yield break;
+
+        Color color = fadeImage.color;
+        float startingAlpha = color.a;
+        float safeDuration = Mathf.Max(0.01f, duration);
+        float elapsed = 0f;
+        Vector3 previousSideRoadPosition = movingSideRoad != null
+            ? movingSideRoad.transform.position
+            : Vector3.zero;
+
+        while (elapsed < safeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            if (movingObject != null && movingSideRoad != null)
+            {
+                Vector3 currentSideRoadPosition = movingSideRoad.transform.position;
+                movingObject.position += currentSideRoadPosition - previousSideRoadPosition;
+                previousSideRoadPosition = currentSideRoadPosition;
+            }
+            else if (movingObject != null && GameManager.Instance != null)
+            {
+                movingObject.position += Vector3.down *
+                                         GameManager.Instance.CurrentGameSpeed *
+                                         Time.deltaTime;
+            }
+
+            float progress = Mathf.Clamp01(elapsed / safeDuration);
+            color.a = Mathf.Lerp(startingAlpha, targetAlpha, progress);
+            fadeImage.color = color;
+            yield return null;
+        }
+
+        color.a = targetAlpha;
+        fadeImage.color = color;
     }
 
     public void SwitchEnvironment(EnvironmentDefinition environment)

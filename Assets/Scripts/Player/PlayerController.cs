@@ -39,6 +39,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 initialPosition;
     private float lockedY;
     private float environmentSpeedMultiplier = 1f;
+    private bool externalMovementActive;
 
     private void Awake()
     {
@@ -77,7 +78,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped)
+        if (externalMovementActive ||
+            (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped))
             return;
 
         if (collisionPush != null && collisionPush.IsBounceActive)
@@ -355,6 +357,18 @@ public class PlayerController : MonoBehaviour
             dragTargetPosition = transform.position;
             isDragging = false;
         }
+    }
+
+    public void BeginExternalMovement()
+    {
+        CancelDragForExternalMovement();
+        externalMovementActive = true;
+    }
+
+    public void EndExternalMovement()
+    {
+        externalMovementActive = false;
+        SyncDragTargetToCurrentPosition();
     }
 
     public void SyncDragTargetToCurrentPosition()

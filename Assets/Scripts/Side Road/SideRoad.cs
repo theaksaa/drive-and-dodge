@@ -25,6 +25,7 @@ public class SideRoad : MonoBehaviour
     [SerializeField] private BoxCollider2D triggerCollider;
 
     private SideRoadVisual sideRoadVisual;
+    private LaneSystem laneSystem;
 
     [Header("Environment Transition")]
     [Tooltip("Entering this side road switches to this environment. Leave empty for a normal side road.")]
@@ -43,6 +44,7 @@ public class SideRoad : MonoBehaviour
     private SideRoadDirection direction;
     private SideRoadType sideRoadType;
     private bool playerInside;
+    private bool playerHasCrossedRoadEdge;
     private bool wasCountedAsVisible;
     private bool directionWasConfigured;
 
@@ -59,6 +61,7 @@ public class SideRoad : MonoBehaviour
             spriteRenderer = GetComponent<SpriteRenderer>();
 
         sideRoadVisual = GetComponent<SideRoadVisual>();
+        laneSystem = FindAnyObjectByType<LaneSystem>();
 
         if (sideRoadVisual == null)
             sideRoadVisual = gameObject.AddComponent<SideRoadVisual>();
@@ -155,7 +158,15 @@ public class SideRoad : MonoBehaviour
 
         playerInside = true;
         AddActiveZone();
-        PlayerEnteredSideRoad?.Invoke(this);
+        TryEnterSideRoad(other);
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (!playerInside || playerHasCrossedRoadEdge || !other.CompareTag("Player"))
+            return;
+
+        TryEnterSideRoad(other);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -168,7 +179,35 @@ public class SideRoad : MonoBehaviour
 
         playerInside = false;
         RemoveActiveZone();
-        PlayerExitedSideRoad?.Invoke(this);
+
+        if (playerHasCrossedRoadEdge)
+        {
+            playerHasCrossedRoadEdge = false;
+            PlayerExitedSideRoad?.Invoke(this);
+        }
+    }
+
+    private void TryEnterSideRoad(Collider2D playerCollider)
+    {
+        if (laneSystem == null)
+            laneSystem = FindAnyObjectByType<LaneSystem>();
+
+        if (laneSystem == null)
+            return;
+
+        // The trigger deliberately overlaps the main road so it can temporarily
+        // unlock movement toward the branch. Do not count that overlap as an
+        // entry: the player's center must actually cross the main-road edge.
+        float playerCenterX = playerCollider.bounds.center.x;
+        bool crossedRoadEdge = direction == SideRoadDirection.Left
+            ? playerCenterX < laneSystem.RoadLeftX
+            : playerCenterX > laneSystem.RoadRightX;
+
+        if (!crossedRoadEdge)
+            return;
+
+        playerHasCrossedRoadEdge = true;
+        PlayerEnteredSideRoad?.Invoke(this);
     }
 
     private void AddActiveZone()
@@ -194,6 +233,8 @@ public class SideRoad : MonoBehaviour
             playerInside = false;
             RemoveActiveZone();
         }
+
+        playerHasCrossedRoadEdge = false;
 
         if (wasCountedAsVisible)
         {

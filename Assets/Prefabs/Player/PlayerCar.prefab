@@ -477,6 +477,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHealth: 100
+  lowHealthThreshold: 100
+  spriteRenderer: {fileID: 0}
+  lowHealthSprite: {fileID: -5177244490670911129, guid: 93a381e8b148eb64998ad84f28ee4875, type: 3}
 --- !u!114 &6652663381615081936
 MonoBehaviour:
   m_ObjectHideFlags: 0

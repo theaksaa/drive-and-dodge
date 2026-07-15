@@ -6,6 +6,10 @@ public class TrafficVehicle : MonoBehaviour
     [SerializeField] private float speedOffset = 0f;
     [SerializeField] private float minMoveSpeed = 3f;
 
+    [Header("Animation Speed")]
+    [SerializeField] private float animationReferenceSpeed = 6f;
+    [SerializeField] [Range(0.25f, 1f)] private float minimumAnimationDurationMultiplier = 0.55f;
+
     [Header("Lane Change")]
     [SerializeField] [Range(0f, 1f)] private float laneChangeProbability = 0.2f;
     [SerializeField] private float minLaneChangeDelay = 0.45f;
@@ -17,6 +21,11 @@ public class TrafficVehicle : MonoBehaviour
     [Header("Blinkers")]
     [SerializeField] private float blinkerInterval = 0.09f;
     [SerializeField] private float preLaneChangeBlinkDuration = 2f;
+
+    [Header("Hit Reaction")]
+    [SerializeField] private float hitDriftDuration = 0.65f;
+    [SerializeField] private float hitDriftAngle = 22f;
+    [SerializeField] private float hitDriftEdgeOvershoot = 0.75f;
 
     public float SpeedOffset => speedOffset;
     public int LaneIndex { get; private set; } = -1;
@@ -41,6 +50,14 @@ public class TrafficVehicle : MonoBehaviour
     private int laneChangeSourceLaneIndex = -1;
     private bool laneChangeInProgress;
     private bool laneChangeCompleted;
+
+    private bool isHitReacting;
+    private float hitReactionStartedAtTime;
+    private float hitReactionStartX;
+    private float hitReactionTargetX;
+    private float hitReactionStartAngle;
+    private float hitReactionDirection;
+    private float activeHitReactionDuration;
 
     private void Awake()
     {
@@ -83,8 +100,9 @@ public class TrafficVehicle : MonoBehaviour
         }
 
         targetLaneIndex = laneIndex + direction;
-        startDelay = Random.Range(minLaneChangeDelay, Mathf.Max(minLaneChangeDelay, maxLaneChangeDelay));
-        duration = Mathf.Max(0.05f, defaultLaneChangeDuration);
+        startDelay = GetSpeedAdjustedDuration(
+            Random.Range(minLaneChangeDelay, Mathf.Max(minLaneChangeDelay, maxLaneChangeDelay)));
+        duration = GetSpeedAdjustedDuration(defaultLaneChangeDuration);
         return true;
     }
 
@@ -145,9 +163,99 @@ public class TrafficVehicle : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped)
             return;
 
+        if (isHitReacting)
+        {
+            UpdateHitReaction();
+            MoveDown();
+            return;
+        }
+
         UpdateLaneChange();
         MoveDown();
         DestroyIfOutsideScreen();
+    }
+
+    public void BeginHitReaction(float playerX)
+    {
+        if (isHitReacting)
+            return;
+
+        hitReactionDirection = Mathf.Sign(transform.position.x - playerX);
+
+        if (Mathf.Approximately(hitReactionDirection, 0f))
+        {
+            float roadCenterX = laneSystem != null
+                ? (laneSystem.RoadLeftX + laneSystem.RoadRightX) * 0.5f
+                : 0f;
+
+            hitReactionDirection = transform.position.x >= roadCenterX ? 1f : -1f;
+        }
+
+        float halfWidth = GetHalfWidth();
+        float edgeX;
+
+        if (laneSystem != null)
+        {
+            edgeX = hitReactionDirection < 0f
+                ? laneSystem.RoadLeftX - halfWidth - hitDriftEdgeOvershoot
+                : laneSystem.RoadRightX + halfWidth + hitDriftEdgeOvershoot;
+        }
+        else
+        {
+            float fallbackDistance = Mathf.Max(2f, halfWidth * 3f + hitDriftEdgeOvershoot);
+            edgeX = transform.position.x + hitReactionDirection * fallbackDistance;
+        }
+
+        isHitReacting = true;
+        hitReactionStartedAtTime = Time.time;
+        hitReactionStartX = transform.position.x;
+        hitReactionTargetX = edgeX;
+        hitReactionStartAngle = transform.eulerAngles.z;
+        activeHitReactionDuration = GetSpeedAdjustedDuration(hitDriftDuration);
+
+        hasPlannedLaneChange = false;
+        laneChangeInProgress = false;
+        plannedTargetLaneIndex = -1;
+        SetBlinkersActive(false, false);
+        DisableCollidersForHitReaction();
+    }
+
+    private void UpdateHitReaction()
+    {
+        float progress = Mathf.Clamp01(
+            (Time.time - hitReactionStartedAtTime) / activeHitReactionDuration);
+        float easedProgress = progress * progress * (3f - 2f * progress);
+
+        Vector3 position = transform.position;
+        position.x = Mathf.Lerp(hitReactionStartX, hitReactionTargetX, easedProgress);
+        transform.position = position;
+
+        float steeringAmount = Mathf.Sin(progress * Mathf.PI);
+        float targetAngle = hitReactionStartAngle - hitReactionDirection * hitDriftAngle * steeringAmount;
+        transform.rotation = Quaternion.Euler(0f, 0f, targetAngle);
+
+        if (progress >= 1f)
+            Destroy(gameObject);
+    }
+
+    private float GetSpeedAdjustedDuration(float baseDuration)
+    {
+        float referenceSpeed = Mathf.Max(0.1f, animationReferenceSpeed);
+        float speedRatio = GetFinalMoveSpeed() / referenceSpeed;
+        float durationMultiplier = Mathf.Clamp(
+            1f / Mathf.Max(1f, speedRatio),
+            minimumAnimationDurationMultiplier,
+            1f);
+
+        return Mathf.Max(0.05f, baseDuration * durationMultiplier);
+    }
+
+    private void DisableCollidersForHitReaction()
+    {
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+
+        foreach (Collider2D collider in colliders)
+            collider.enabled = false;
     }
 
     private void UpdateLaneChange()
@@ -249,6 +357,9 @@ public class TrafficVehicle : MonoBehaviour
 
     private bool OccupiesLaneAtTime(int laneIndex, float futureTime)
     {
+        if (isHitReacting)
+            return false;
+
         if (laneChangeInProgress)
         {
             float remainingTime = Mathf.Max(0f, plannedLaneChangeDuration - (Time.time - laneChangeStartedAtTime));
@@ -341,6 +452,21 @@ public class TrafficVehicle : MonoBehaviour
         {
             return spriteRenderer.sprite.bounds.size.y * Mathf.Abs(transform.localScale.y) / 2f;
         }
+
+        return 0.5f;
+    }
+
+    private float GetHalfWidth()
+    {
+        Collider2D vehicleCollider = GetComponent<Collider2D>();
+
+        if (vehicleCollider != null)
+            return vehicleCollider.bounds.extents.x;
+
+        SpriteRenderer spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+        if (spriteRenderer != null)
+            return spriteRenderer.bounds.extents.x;
 
         return 0.5f;
     }

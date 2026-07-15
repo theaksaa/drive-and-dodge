@@ -4,20 +4,25 @@ public class PlayerCollisionPush : MonoBehaviour
 {
     [Header("Collision Push")]
     [SerializeField] private float collisionPushDistance = 0.7f;
-    [SerializeField] private float collisionBounceDuration = 0.09f;
+    [SerializeField] private float collisionBounceDuration = 0.24f;
+    [SerializeField] private float collisionDriftAngle = 14f;
 
     private PlayerController playerController;
     private float collisionBounceDirection;
     private float activeCollisionPushDistance;
-    private float collisionBounceTimer;
+    private float activeCollisionBounceDuration;
+    private float collisionBounceElapsed;
+    private float collisionBounceStartX;
+    private Quaternion baseLocalRotation;
 
     public bool IsBounceActive =>
-        collisionBounceTimer > 0f &&
+        collisionBounceElapsed < activeCollisionBounceDuration &&
         !Mathf.Approximately(collisionBounceDirection, 0f);
 
     private void Awake()
     {
         playerController = GetComponent<PlayerController>();
+        baseLocalRotation = transform.localRotation;
 
         if (playerController == null)
             Debug.LogWarning("PlayerCollisionPush: PlayerController not found on Player.");
@@ -30,7 +35,9 @@ public class PlayerCollisionPush : MonoBehaviour
 
         collisionBounceDirection = Mathf.Sign(direction);
         activeCollisionPushDistance = collisionPushDistance;
-        collisionBounceTimer = Mathf.Max(0.01f, collisionBounceDuration);
+        activeCollisionBounceDuration = Mathf.Max(0.05f, collisionBounceDuration);
+        collisionBounceElapsed = 0f;
+        collisionBounceStartX = transform.position.x;
 
         if (playerController != null)
             playerController.CancelDragForExternalMovement();
@@ -41,24 +48,35 @@ public class PlayerCollisionPush : MonoBehaviour
         if (!IsBounceActive || targetTransform == null)
             return;
 
-        float duration = Mathf.Max(0.01f, collisionBounceDuration);
-        float normalizedTime = 1f - (collisionBounceTimer / duration);
-        float bounceStrength = 1f - normalizedTime;
-        float frameDistance = collisionBounceDirection * activeCollisionPushDistance * bounceStrength * (Time.deltaTime / duration);
+        collisionBounceElapsed = Mathf.Min(
+            collisionBounceElapsed + Time.deltaTime,
+            activeCollisionBounceDuration);
+
+        float progress = collisionBounceElapsed / activeCollisionBounceDuration;
+        float easedProgress = SmootherStep(progress);
 
         Vector3 position = targetTransform.position;
-        position.x += frameDistance;
+        position.x = collisionBounceStartX +
+                     collisionBounceDirection * activeCollisionPushDistance * easedProgress;
         targetTransform.position = position;
 
-        collisionBounceTimer -= Time.deltaTime;
+        float driftAmount = Mathf.Sin(progress * Mathf.PI);
+        float driftAngle = -collisionBounceDirection * collisionDriftAngle * driftAmount;
+        targetTransform.localRotation = baseLocalRotation * Quaternion.Euler(0f, 0f, driftAngle);
 
-        if (collisionBounceTimer <= 0f)
+        if (collisionBounceElapsed >= activeCollisionBounceDuration)
         {
-            collisionBounceTimer = 0f;
+            targetTransform.localRotation = baseLocalRotation;
             collisionBounceDirection = 0f;
         }
 
         if (playerController != null)
             playerController.SyncDragTargetToCurrentPosition();
+    }
+
+    private static float SmootherStep(float value)
+    {
+        value = Mathf.Clamp01(value);
+        return value * value * value * (value * (value * 6f - 15f) + 10f);
     }
 }

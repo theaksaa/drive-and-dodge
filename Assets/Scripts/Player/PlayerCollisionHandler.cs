@@ -29,11 +29,15 @@ public class PlayerCollisionHandler : MonoBehaviour
 
         TrafficVehicle trafficVehicle = other.GetComponentInParent<TrafficVehicle>();
 
-        if (trafficVehicle != null &&
-            collisionPush != null &&
-            trafficVehicle.TryGetCollisionPushDirection(transform.position.x, out float pushDirection))
+        if (trafficVehicle != null)
         {
-            collisionPush.ApplyPush(pushDirection);
+            trafficVehicle.BeginHitReaction(transform.position.x);
+
+            if (collisionPush != null &&
+                trafficVehicle.TryGetCollisionPushDirection(transform.position.x, out float pushDirection))
+            {
+                collisionPush.ApplyPush(pushDirection);
+            }
         }
 
         DamageDealer damageDealer = other.GetComponentInParent<DamageDealer>();

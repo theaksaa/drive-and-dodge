@@ -505,4 +505,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCollisionPush
   collisionPushDistance: 1.55
-  collisionBounceDuration: 0.09
+  collisionBounceDuration: 0.24
+  collisionDriftAngle: 14

@@ -384,6 +384,7 @@ public class PlayerController : MonoBehaviour
 
         lockedY = initialPosition.y;
         transform.position = new Vector3(targetX, lockedY, initialPosition.z);
+        transform.localRotation = baseLocalRotation;
         dragTargetPosition = transform.position;
         isDragging = false;
 

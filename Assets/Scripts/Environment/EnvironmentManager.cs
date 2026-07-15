@@ -105,9 +105,6 @@ public class EnvironmentManager : MonoBehaviour
         if (destination != null)
             SwitchEnvironment(destination);
 
-        if (playerTransform != null)
-            playerTransform.rotation = startingRotation;
-
         // Let destroyed world objects and the new environment visual settle while
         // the screen is fully covered.
         yield return null;

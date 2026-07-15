@@ -156,8 +156,10 @@ MonoBehaviour:
   spriteRenderer: {fileID: 3196053357304750571}
   triggerCollider: {fileID: 592074100141232927}
   destinationEnvironment: {fileID: 11400000, guid: bb8a05d233f7a0d438671617b2fe4dbe, type: 2}
-  visualRiseRatio: 0.95
+  visualRiseRatio: 4
   visualThicknessRatio: 1.25
   visualEdgeThicknessRatio: 0.2
-  visualDividerWidthMultiplier: 1
-  visualOuterExtensionMultiplier: 1
+  visualOuterExtensionMultiplier: 0.25
+  visualOuterScreenPadding: 2
+  visualCurveStrength: 1
+  visualCurveSegments: 40

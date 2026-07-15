@@ -40,6 +40,12 @@ public class SideRoad : MonoBehaviour
     [Range(0.01f, 0.49f)] [SerializeField] private float visualEdgeThicknessRatio = 0.20f;
     [Tooltip("How many road-thickness units the branch extends beyond the outside screen edge.")]
     [Min(0f)] [SerializeField] private float visualOuterExtensionMultiplier = 1f;
+    [Tooltip("Extra world-space distance the complete road continues after clearing the outside screen edge.")]
+    [Min(0f)] [SerializeField] private float visualOuterScreenPadding = 0.5f;
+    [Tooltip("How strongly the branch eases into vertical tangents at the main road and outside edge.")]
+    [Range(0f, 1f)] [SerializeField] private float visualCurveStrength = 1f;
+    [Tooltip("Number of sections used to draw the curved road. Higher values look smoother.")]
+    [Range(4, 64)] [SerializeField] private int visualCurveSegments = 20;
 
     private SideRoadDirection direction;
     private SideRoadType sideRoadType;
@@ -47,6 +53,7 @@ public class SideRoad : MonoBehaviour
     private bool playerHasCrossedRoadEdge;
     private bool wasCountedAsVisible;
     private bool directionWasConfigured;
+    private PolygonCollider2D curvedTriggerCollider;
 
     public SideRoadDirection Direction => direction;
     public SideRoadType RoadType => sideRoadType;
@@ -66,12 +73,19 @@ public class SideRoad : MonoBehaviour
         if (sideRoadVisual == null)
             sideRoadVisual = gameObject.AddComponent<SideRoadVisual>();
 
+        curvedTriggerCollider = GetComponent<PolygonCollider2D>();
+
+        if (curvedTriggerCollider == null)
+            curvedTriggerCollider = gameObject.AddComponent<PolygonCollider2D>();
+
         // The prefab SpriteRenderer was only a placeholder. The actual road is
         // assembled from the active environment sprites during Setup.
         if (spriteRenderer != null)
             spriteRenderer.enabled = false;
 
         triggerCollider.isTrigger = true;
+        triggerCollider.enabled = false;
+        curvedTriggerCollider.isTrigger = true;
     }
 
     private void OnEnable()
@@ -123,21 +137,19 @@ public class SideRoad : MonoBehaviour
         if (triggerCollider == null)
             triggerCollider = GetComponent<BoxCollider2D>();
 
-        triggerCollider.isTrigger = true;
+        triggerCollider.enabled = false;
+
+        if (curvedTriggerCollider == null)
+            curvedTriggerCollider = GetComponent<PolygonCollider2D>();
+
+        if (curvedTriggerCollider == null)
+            curvedTriggerCollider = gameObject.AddComponent<PolygonCollider2D>();
+
+        curvedTriggerCollider.isTrigger = true;
 
         float safeVisualWidth = Mathf.Max(visualWidth, 0.01f);
         float safeVisualHeight = Mathf.Max(visualHeight, 0.01f);
-        triggerCollider.size = new Vector2(
-            safeVisualWidth + triggerOverlapIntoMainRoad,
-            safeVisualHeight);
-
-        float offsetX = triggerOverlapIntoMainRoad * 0.5f;
-
-        triggerCollider.offset = direction == SideRoadDirection.Left
-            ? new Vector2(offsetX, 0f)
-            : new Vector2(-offsetX, 0f);
-
-        sideRoadVisual.Build(
+        Vector2[] triggerPath = sideRoadVisual.Build(
             direction,
             safeVisualWidth,
             safeVisualHeight,
@@ -145,7 +157,13 @@ public class SideRoad : MonoBehaviour
             visualRiseRatio,
             visualThicknessRatio,
             visualEdgeThicknessRatio,
-            visualOuterExtensionMultiplier);
+            visualOuterExtensionMultiplier,
+            visualOuterScreenPadding,
+            visualCurveStrength,
+            visualCurveSegments);
+
+        curvedTriggerCollider.pathCount = 1;
+        curvedTriggerCollider.SetPath(0, triggerPath);
     }
 
     private void OnTriggerEnter2D(Collider2D other)

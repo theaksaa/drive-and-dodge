@@ -14,6 +14,7 @@ public class EnvironmentManager : MonoBehaviour
 
     [Header("Side Road Transition")]
     [Min(0.05f)] [SerializeField] private float sideRoadDriveDuration = 0.65f;
+    [Tooltip("Extra distance the player travels past the camera edge before the side-road drive ends.")]
     [Min(0f)] [SerializeField] private float sideRoadDriveDistance = 0.75f;
     [Min(0f)] [SerializeField] private float sideRoadDriveRise = 0.7f;
     [Range(0f, 90f)] [SerializeField] private float sideRoadTurnAngle = 55f;
@@ -125,7 +126,7 @@ public class EnvironmentManager : MonoBehaviour
         Vector3 startingSideRoadPosition = sideRoad.transform.position;
         float direction = sideRoad.Direction == SideRoadDirection.Left ? -1f : 1f;
         Vector3 targetPositionAtStart = new Vector3(
-            sideRoad.transform.position.x + direction * sideRoadDriveDistance,
+            GetOffscreenTargetX(playerTransform, sideRoad, direction),
             startingPosition.y + sideRoadDriveRise,
             startingPosition.z);
         Quaternion targetRotation = startingRotation * Quaternion.Euler(
@@ -165,6 +166,42 @@ public class EnvironmentManager : MonoBehaviour
 
             yield return null;
         }
+
+        // Set the exact final pose as the loop can finish one frame past the
+        // duration. The target is beyond the camera edge, so the car can never
+        // be left visibly stopped while the transition fades out.
+        playerTransform.position = targetPositionAtStart + sideRoadDisplacement;
+        playerTransform.rotation = targetRotation;
+    }
+
+    private float GetOffscreenTargetX(
+        Transform playerTransform,
+        SideRoad sideRoad,
+        float direction)
+    {
+        float sideRoadTargetX = sideRoad.transform.position.x +
+                                direction * sideRoadDriveDistance;
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+            return sideRoadTargetX;
+
+        float distanceFromCamera = Mathf.Abs(
+            mainCamera.transform.position.z - playerTransform.position.z);
+        float viewportX = direction < 0f ? 0f : 1f;
+        float cameraEdgeX = mainCamera.ViewportToWorldPoint(
+            new Vector3(viewportX, 0.5f, distanceFromCamera)).x;
+
+        Renderer playerRenderer = playerTransform.GetComponentInChildren<Renderer>();
+        float playerClearance = playerRenderer != null
+            ? playerRenderer.bounds.extents.magnitude
+            : 0f;
+        float offscreenTargetX = cameraEdgeX + direction *
+                                 (playerClearance + sideRoadDriveDistance);
+
+        return direction < 0f
+            ? Mathf.Min(sideRoadTargetX, offscreenTargetX)
+            : Mathf.Max(sideRoadTargetX, offscreenTargetX);
     }
 
     private void EnsureFadeOverlay()

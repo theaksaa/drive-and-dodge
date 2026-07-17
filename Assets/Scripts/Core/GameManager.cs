@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -7,11 +8,15 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     public event Action<bool> PauseStateChanged;
+    public event Action GameplayStarted;
 
     [Header("Game State")]
     public bool IsGameOver { get; private set; }
     public bool IsPaused { get; private set; }
-    public bool IsGameplayStopped => IsGameOver || IsPaused;
+    public bool IsStarting { get; private set; }
+    public bool IsGameplayStopped => IsGameOver || IsPaused || IsStarting;
+
+    [SerializeField, Min(0f)] private float startupDelay = 1.25f;
 
     [Header("Global Speed")]
     [SerializeField] private float startGameSpeed = 6f;
@@ -54,6 +59,18 @@ public class GameManager : MonoBehaviour
             Instance = null;
     }
 
+    private IEnumerator Start()
+    {
+        if (startupDelay > 0f)
+            yield return new WaitForSeconds(startupDelay);
+
+        if (!IsGameOver)
+        {
+            IsStarting = false;
+            GameplayStarted?.Invoke();
+        }
+    }
+
     private void Update()
     {
         if (IsGameplayStopped)
@@ -69,6 +86,7 @@ public class GameManager : MonoBehaviour
         CurrentGameSpeed = startGameSpeed;
         IsGameOver = false;
         IsPaused = false;
+        IsStarting = true;
         canIncreaseGameSpeed = true;
     }
 

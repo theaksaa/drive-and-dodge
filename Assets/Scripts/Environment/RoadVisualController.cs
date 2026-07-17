@@ -85,6 +85,9 @@ public class RoadVisualController : MonoBehaviour
         if (!HasVisualState())
             return;
 
+        if (GameManager.Instance != null && GameManager.Instance.IsGameplayStopped)
+            return;
+
         float moveSpeed = GameManager.Instance != null ? GameManager.Instance.CurrentGameSpeed : 0f;
         if (moveSpeed <= 0f)
             return;

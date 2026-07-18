@@ -46,6 +46,12 @@ public class SpawnSafetyPlanner : MonoBehaviour
         if (request.SafetyMode == SpawnSafetyMode.SkipValidation)
             return true;
 
+        // Traffic-only scenes, such as the main menu background, intentionally
+        // have no player. Keep traffic-to-traffic spacing handled by the normal
+        // spawner while skipping the player escape-path requirement.
+        if (playerLaneTracker == null)
+            return true;
+
         if (!TryBuildTrafficSnapshot(request, out TrafficSnapshot candidate))
             return false;
 
@@ -65,7 +71,7 @@ public class SpawnSafetyPlanner : MonoBehaviour
 
     public void RegisterTrafficSpawn(TrafficSpawnRequest request)
     {
-        if (request.SafetyMode == SpawnSafetyMode.SkipValidation)
+        if (request.SafetyMode == SpawnSafetyMode.SkipValidation || playerLaneTracker == null)
             return;
 
         if (!TryBuildTrafficSnapshot(request, out TrafficSnapshot snapshot))
